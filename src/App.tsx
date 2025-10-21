@@ -44,16 +44,16 @@ function App() {
     }
   }, []);
 
+  // 🔄 Sync cart between tabs
   useEffect(() => {
-  const syncCart = () => {
-    const stored = localStorage.getItem("cart");
-    setCart(stored ? JSON.parse(stored) : []);
-  };
+    const syncCart = () => {
+      const stored = localStorage.getItem("cart");
+      setCart(stored ? JSON.parse(stored) : []);
+    };
 
-  window.addEventListener("storage", syncCart);
-  return () => window.removeEventListener("storage", syncCart);
-}, []);
-
+    window.addEventListener("storage", syncCart);
+    return () => window.removeEventListener("storage", syncCart);
+  }, []);
 
   // 💾 Save cart to localStorage whenever it changes
   useEffect(() => {
@@ -108,7 +108,7 @@ function App() {
       if (
         cartRef.current &&
         !cartRef.current.contains(event.target as Node) &&
-        !(event.target as HTMLElement).closest(".cart-toggle-btn") // prevent closing when clicking the icon itself
+        !(event.target as HTMLElement).closest(".cart-toggle-btn")
       ) {
         setIsCartOpen(false);
       }
@@ -128,7 +128,7 @@ function App() {
       {/* ✅ Backend status indicator */}
       <BackendStatus />
 
-      {/* ✅ Navbar now toggles cart */}
+      {/* ✅ Navbar with cart toggle */}
       <Navbar
         cartCount={cartCount}
         onCartClick={() => setIsCartOpen((prev) => !prev)}
@@ -138,8 +138,12 @@ function App() {
 
       <main className="flex-1">
         <Routes>
-          <Route path="/" element={<HomePage onAdd={addToCart} />} />
+          {/* 🏠 Home page (no cart logic) */}
+          <Route path="/" element={<HomePage />} />
+
+          {/* 🛍️ Shop page (can add to cart) */}
           <Route path="/shop" element={<ShopPage onAdd={addToCart} />} />
+
           <Route path="/order" element={<OrderPage />} />
           <Route
             path="/checkout"
@@ -157,13 +161,15 @@ function App() {
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/store-locator" element={<StoreLocatorPage />} />
           <Route path="/about" element={<AboutPage />} />
-          <Route path="*" element={<HomePage onAdd={addToCart} />} />
+
+          {/* Fallback route → HomePage (no cart) */}
+          <Route path="*" element={<HomePage />} />
         </Routes>
       </main>
 
       <Footer />
 
-      {/* 🛍️ Cart panel only shows when clicked */}
+      {/* 🛒 Cart panel (desktop only) */}
       {isCartOpen && (
         <div
           ref={cartRef}
