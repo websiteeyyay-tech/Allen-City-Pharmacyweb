@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Infrastructure/PharmacyApp.Infrastructure.csproj": {}
+    "/workspaces/Allen-City-Pharmacyweb/backend/PharmacyApp.Infrastructure/PharmacyApp.Infrastructure.csproj": {}
   },
   "projects": {
-    "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Core/PharmacyApp.Core.csproj": {
+    "/workspaces/Allen-City-Pharmacyweb/backend/PharmacyApp.Core/PharmacyApp.Core.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Core/PharmacyApp.Core.csproj",
+        "projectUniqueName": "/workspaces/Allen-City-Pharmacyweb/backend/PharmacyApp.Core/PharmacyApp.Core.csproj",
         "projectName": "PharmacyApp.Core",
-        "projectPath": "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Core/PharmacyApp.Core.csproj",
+        "projectPath": "/workspaces/Allen-City-Pharmacyweb/backend/PharmacyApp.Core/PharmacyApp.Core.csproj",
         "packagesPath": "/home/codespace/.nuget/packages/",
-        "outputPath": "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Core/obj/",
+        "outputPath": "/workspaces/Allen-City-Pharmacyweb/backend/PharmacyApp.Core/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/home/codespace/.nuget/NuGet/NuGet.Config"
@@ -62,14 +62,14 @@
         }
       }
     },
-    "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Infrastructure/PharmacyApp.Infrastructure.csproj": {
+    "/workspaces/Allen-City-Pharmacyweb/backend/PharmacyApp.Infrastructure/PharmacyApp.Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Infrastructure/PharmacyApp.Infrastructure.csproj",
+        "projectUniqueName": "/workspaces/Allen-City-Pharmacyweb/backend/PharmacyApp.Infrastructure/PharmacyApp.Infrastructure.csproj",
         "projectName": "PharmacyApp.Infrastructure",
-        "projectPath": "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Infrastructure/PharmacyApp.Infrastructure.csproj",
+        "projectPath": "/workspaces/Allen-City-Pharmacyweb/backend/PharmacyApp.Infrastructure/PharmacyApp.Infrastructure.csproj",
         "packagesPath": "/home/codespace/.nuget/packages/",
-        "outputPath": "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Infrastructure/obj/",
+        "outputPath": "/workspaces/Allen-City-Pharmacyweb/backend/PharmacyApp.Infrastructure/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/home/codespace/.nuget/NuGet/NuGet.Config"
@@ -84,8 +84,8 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Core/PharmacyApp.Core.csproj": {
-                "projectPath": "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Core/PharmacyApp.Core.csproj"
+              "/workspaces/Allen-City-Pharmacyweb/backend/PharmacyApp.Core/PharmacyApp.Core.csproj": {
+                "projectPath": "/workspaces/Allen-City-Pharmacyweb/backend/PharmacyApp.Core/PharmacyApp.Core.csproj"
               }
             }
           }

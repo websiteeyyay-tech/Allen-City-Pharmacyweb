@@ -10,3 +10,15 @@
 /workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Core/obj/Debug/net8.0/refint/PharmacyApp.Core.dll
 /workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Core/obj/Debug/net8.0/PharmacyApp.Core.pdb
 /workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Core/obj/Debug/net8.0/ref/PharmacyApp.Core.dll
+/workspaces/Allen-City-Pharmacyweb/backend/PharmacyApp.Core/bin/Debug/net8.0/PharmacyApp.Core.deps.json
+/workspaces/Allen-City-Pharmacyweb/backend/PharmacyApp.Core/bin/Debug/net8.0/PharmacyApp.Core.dll
+/workspaces/Allen-City-Pharmacyweb/backend/PharmacyApp.Core/bin/Debug/net8.0/PharmacyApp.Core.pdb
+/workspaces/Allen-City-Pharmacyweb/backend/PharmacyApp.Core/obj/Debug/net8.0/PharmacyApp.Core.GeneratedMSBuildEditorConfig.editorconfig
+/workspaces/Allen-City-Pharmacyweb/backend/PharmacyApp.Core/obj/Debug/net8.0/PharmacyApp.Core.AssemblyInfoInputs.cache
+/workspaces/Allen-City-Pharmacyweb/backend/PharmacyApp.Core/obj/Debug/net8.0/PharmacyApp.Core.AssemblyInfo.cs
+/workspaces/Allen-City-Pharmacyweb/backend/PharmacyApp.Core/obj/Debug/net8.0/PharmacyApp.Core.csproj.CoreCompileInputs.cache
+/workspaces/Allen-City-Pharmacyweb/backend/PharmacyApp.Core/obj/Debug/net8.0/PharmacyApp.Core.sourcelink.json
+/workspaces/Allen-City-Pharmacyweb/backend/PharmacyApp.Core/obj/Debug/net8.0/PharmacyApp.Core.dll
+/workspaces/Allen-City-Pharmacyweb/backend/PharmacyApp.Core/obj/Debug/net8.0/refint/PharmacyApp.Core.dll
+/workspaces/Allen-City-Pharmacyweb/backend/PharmacyApp.Core/obj/Debug/net8.0/PharmacyApp.Core.pdb
+/workspaces/Allen-City-Pharmacyweb/backend/PharmacyApp.Core/obj/Debug/net8.0/ref/PharmacyApp.Core.dll
