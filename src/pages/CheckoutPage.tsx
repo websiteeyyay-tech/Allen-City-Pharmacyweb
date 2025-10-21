@@ -1,25 +1,39 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Visa from "../assets/Visa.png";
 import Mastercard from "../assets/Mastercard.png";
 import Amex from "../assets/amex.png";
 import Googleplay from "../assets/Googleplay.png";
 import Paypal from "../assets/Paypal.png";
 
-interface CartItem {
+export interface CartItem {
+  id: number;
   name: string;
   price: number;
   qty: number;
+  image?: string;
 }
 
 interface CheckoutData {
   items: CartItem[];
   subtotal: number;
-  tax: number;
   shipping: number;
+  tax: number;
   total: number;
 }
 
-const CheckOutPage: React.FC = () => {
+interface CheckoutPageProps {
+  cart: CartItem[];
+  setQty: (productId: number, qty: number) => void;
+  removeFromCart: (productId: number) => void;
+  clearCart: () => void;
+}
+
+const CheckoutPage: React.FC<CheckoutPageProps> = ({
+  cart,
+  setQty,
+  removeFromCart,
+  clearCart,
+}) => {
   const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null);
   const [formData, setFormData] = useState({
     firstName: "",
@@ -39,11 +53,37 @@ const CheckOutPage: React.FC = () => {
     tos: false,
   });
 
+  const total = useMemo(
+    () => cart.reduce((sum, it) => sum + it.price * it.qty, 0),
+    [cart]
+  );
+
   useEffect(() => {
-    const data = localStorage.getItem("checkoutData");
-    if (data) {
-      setCheckoutData(JSON.parse(data));
-    }
+    const updateCart = () => {
+      const storedCart = localStorage.getItem("cart");
+      if (storedCart) {
+        const items = JSON.parse(storedCart) as CartItem[];
+        const subtotal = items.reduce(
+          (sum, item) => sum + item.price * item.qty,
+          0
+        );
+        const shipping = items.length > 0 ? 120 : 0;
+        const tax = subtotal * 0.05;
+        const total = subtotal + shipping + tax;
+
+        setCheckoutData({
+          items,
+          subtotal,
+          shipping,
+          tax,
+          total,
+        });
+      }
+    };
+
+    updateCart(); // initial load
+    window.addEventListener("storage", updateCart);
+    return () => window.removeEventListener("storage", updateCart);
   }, []);
 
   const handleChange = (
@@ -65,7 +105,12 @@ const CheckOutPage: React.FC = () => {
     }
 
     alert("✅ Order placed successfully! Thank you for trusting Allen City Pharmacy.");
+
+    // 🧹 Clear both checkout data and global cart
+    localStorage.removeItem("cart");
     localStorage.removeItem("checkoutData");
+
+    // 🔁 Redirect back to home
     window.location.href = "/";
   };
 
@@ -421,4 +466,4 @@ const CheckOutPage: React.FC = () => {
   );
 };
 
-export default CheckOutPage;
+export default CheckoutPage;

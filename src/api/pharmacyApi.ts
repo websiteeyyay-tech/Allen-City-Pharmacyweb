@@ -1,11 +1,15 @@
-// Detect API base URL automatically
+// src/api/pharmacyApi.ts
+
+// ✅ Automatically detect and use the correct backend URL
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   (
     window.location.hostname.includes("github.dev") ||
     window.location.hostname.includes("app.github.dev")
-      ? "https://urban-space-goggles-g4v7qv6g79x7fw49p-5272.app.github.dev" // 👈 your Codespace backend URL
-      : "https://localhost:7114" // 👈 local backend URL (if running locally)
+      // 👉 Your current Codespace backend URL
+      ? "https://obscure-cod-x5g4pgqqrj4p3v6vw-5272.app.github.dev"
+      // 👉 Local fallback for running .NET API locally
+      : "https://localhost:5272"
   );
 
 console.log("🌐 Connected to backend:", API_BASE_URL);

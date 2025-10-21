@@ -44,6 +44,17 @@ function App() {
     }
   }, []);
 
+  useEffect(() => {
+  const syncCart = () => {
+    const stored = localStorage.getItem("cart");
+    setCart(stored ? JSON.parse(stored) : []);
+  };
+
+  window.addEventListener("storage", syncCart);
+  return () => window.removeEventListener("storage", syncCart);
+}, []);
+
+
   // 💾 Save cart to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(cart));
