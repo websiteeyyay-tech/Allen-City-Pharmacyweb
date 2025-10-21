@@ -1,0 +1,220 @@
+{
+  "format": 1,
+  "restore": {
+    "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.API/PharmacyApp.API.csproj": {}
+  },
+  "projects": {
+    "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.API/PharmacyApp.API.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.API/PharmacyApp.API.csproj",
+        "projectName": "PharmacyApp.API",
+        "projectPath": "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.API/PharmacyApp.API.csproj",
+        "packagesPath": "/home/codespace/.nuget/packages/",
+        "outputPath": "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.API/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/codespace/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Core/PharmacyApp.Core.csproj": {
+                "projectPath": "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Core/PharmacyApp.Core.csproj"
+              },
+              "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Infrastructure/PharmacyApp.Infrastructure.csproj": {
+                "projectPath": "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Infrastructure/PharmacyApp.Infrastructure.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Microsoft.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[9.0.10, )"
+            },
+            "Microsoft.EntityFrameworkCore.InMemory": {
+              "target": "Package",
+              "version": "[9.0.10, )"
+            },
+            "Swashbuckle.AspNetCore": {
+              "target": "Package",
+              "version": "[6.5.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/8.0.412/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Core/PharmacyApp.Core.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Core/PharmacyApp.Core.csproj",
+        "projectName": "PharmacyApp.Core",
+        "projectPath": "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Core/PharmacyApp.Core.csproj",
+        "packagesPath": "/home/codespace/.nuget/packages/",
+        "outputPath": "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Core/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/codespace/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/8.0.412/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Infrastructure/PharmacyApp.Infrastructure.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Infrastructure/PharmacyApp.Infrastructure.csproj",
+        "projectName": "PharmacyApp.Infrastructure",
+        "projectPath": "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Infrastructure/PharmacyApp.Infrastructure.csproj",
+        "packagesPath": "/home/codespace/.nuget/packages/",
+        "outputPath": "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Infrastructure/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/codespace/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Core/PharmacyApp.Core.csproj": {
+                "projectPath": "/workspaces/Allen-City-Pharmacy/backend/PharmacyApp.Core/PharmacyApp.Core.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Microsoft.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[9.0.10, )"
+            },
+            "Microsoft.EntityFrameworkCore.Sqlite": {
+              "target": "Package",
+              "version": "[9.0.10, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/8.0.412/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

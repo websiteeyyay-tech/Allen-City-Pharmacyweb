@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="../buildMultiTargeting/PharmacyApp.API.props" />
+</Project>
