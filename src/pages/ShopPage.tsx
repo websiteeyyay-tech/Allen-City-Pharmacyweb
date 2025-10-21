@@ -1,4 +1,4 @@
-  import React, { useState, useMemo } from "react";
+  import { useState, useMemo } from "react";
   import { ShoppingCart, X, Trash2 } from "lucide-react";
   import { useNavigate } from "react-router-dom";
 
@@ -14,102 +14,7 @@
     description: string;
     stock: "In stock" | "Low stock" | "Out of stock";
   }
-  interface ShopPageProps {
-    onAdd: (product: any) => void;
-  }
-  const products: Product[] = [
-    {
-      id: 1,
-      name: "Pain Relief Tablets - 20 pack",
-      price: 8.99,
-      oldPrice: 11.99,
-      rating: 4.8,
-      reviews: 1200,
-      category: "Medicine",
-      image:
-        "https://www.deepheat.com.au/cdn/shop/files/27933NAPROXENPAINRELIEF30PK3DHIRES_1200x1200.png?v=1731997526",
-      description:
-        "Fast-acting pain relief tablets ideal for headaches, muscle pain, and body aches. 20 tablets per pack.",
-      stock: "In stock",
-    },
-    {
-      id: 2,
-      name: "Vitamin D3 - 60 softgels",
-      price: 10.5,
-      oldPrice: 13.0,
-      rating: 4.7,
-      reviews: 860,
-      category: "Vitamins",
-      image: "https://medlineplus.gov/images/Vitamins_share.jpg",
-      description:
-        "Vitamin D3 supports bone, immune, and mood health. 60 softgels per bottle.",
-      stock: "Low stock",
-    },
-    {
-      id: 3,
-      name: "Cough Syrup - 150ml",
-      price: 6.75,
-      oldPrice: 8.0,
-      rating: 4.6,
-      reviews: 430,
-      category: "Medicine",
-      image: "https://pics.walgreens.com/prodimg/671386/900.jpg",
-      description:
-        "Provides fast relief from dry and chesty coughs. Non-drowsy formula suitable for daytime use.",
-      stock: "In stock",
-    },
-    {
-      id: 4,
-      name: "Digital Thermometer",
-      price: 9.99,
-      rating: 4.7,
-      reviews: 760,
-      category: "Medical Devices",
-      image: "https://m.media-amazon.com/images/I/61OrvhuAJhL._UF1000,1000_QL80_.jpg",
-      description:
-        "Accurate and fast-reading thermometer suitable for oral, rectal, and underarm use.",
-      stock: "In stock",
-    },
-    {
-      id: 5,
-      name: "First Aid Kit - Compact",
-      price: 24.99,
-      oldPrice: 29.99,
-      rating: 4.5,
-      reviews: 320,
-      category: "Safety",
-      image:
-        "https://target.scene7.com/is/image/Target/GUEST_e7f46325-c1a2-4baa-936d-d37de56b3ad7",
-      description:
-        "Compact first aid kit with essential supplies for home, office, and travel emergencies.",
-      stock: "In stock",
-    },
-    {
-      id: 6,
-      name: "Baby Formula - 400g",
-      price: 18.2,
-      rating: 4.6,
-      reviews: 540,
-      category: "Baby Care",
-      image:
-        "https://www.forthepeople.com/sites/default/files/styles/mm-image/545x306/shutterstock_2387752027cabbd356dfd7c23de3f64833fdbdc651.webp",
-      description:
-        "Premium baby formula with essential nutrients for healthy development. Gentle and easy to digest.",
-      stock: "Low stock",
-    },
-    {
-      id: 7,
-      name: "Hand Sanitizer 500 ml",
-      price: 5.99,
-      rating: 4.9,
-      reviews: 2100,
-      category: "Hygiene",
-      image: "https://i.ebayimg.com/images/g/rAIAAOSwobtlWS4Q/s-l1200.jpg",
-      description:
-        "Kills 99.9% of germs and bacteria. Fast-drying formula with moisturizing ingredients.",
-      stock: "In stock",
-    },
-  ];
+  // Duplicate ShopPageProps and products declarations removed — using the earlier definitions.
   interface ShopPageProps {
     onAdd: (product: any) => void;
   }

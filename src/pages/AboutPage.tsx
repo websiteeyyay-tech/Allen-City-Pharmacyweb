@@ -1,4 +1,4 @@
-import React from "react";
+import * as React from "react";
 import { motion } from "framer-motion";
 import { Pill, Syringe, Stethoscope, Package, Camera, DollarSign } from "lucide-react";
 
