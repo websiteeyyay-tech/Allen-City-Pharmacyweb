@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import Logo from "../assets/AllanCityPharmacyLogo.png";
 
 const StoreLocatorPage: React.FC = () => {
   useEffect(() => {
@@ -13,11 +14,7 @@ const StoreLocatorPage: React.FC = () => {
     }).addTo(map);
 
     // Add zoom controls (top right)
-    L.control
-      .zoom({
-        position: "topright",
-      })
-      .addTo(map);
+    L.control.zoom({ position: "topright" }).addTo(map);
 
     // Branch details
     const branches = [
@@ -47,23 +44,22 @@ const StoreLocatorPage: React.FC = () => {
       },
     ];
 
-    // Add markers for each branch
+    // Add markers
     branches.forEach((branch) => {
       const marker = L.marker(branch.coords as [number, number]).addTo(map);
       marker.bindPopup(`
         <div style="font-family:Segoe UI; line-height:1.5;">
           <h3 style="font-size:15px; font-weight:600; color:#0a4d40; margin-bottom:4px;">${branch.name}</h3>
-          <p style="margin:2px 0;">📍 ${branch.address}</p>
-          <p style="margin:2px 0;">🕒 ${branch.hours}</p>
-          <p style="margin:2px 0;">📞 ${branch.phone}</p>
-          <a href="https://www.google.com/maps?q=${encodeURIComponent(
-            branch.address
-          )}" target="_blank" style="color:#007bff; text-decoration:underline;">View on Google Maps</a>
+          <p>📍 ${branch.address}</p>
+          <p>🕒 ${branch.hours}</p>
+          <p>📞 ${branch.phone}</p>
+          <a href="https://www.google.com/maps?q=${encodeURIComponent(branch.address)}" 
+             target="_blank" style="color:#007bff; text-decoration:underline;">View on Google Maps</a>
         </div>
       `);
     });
 
-    // “Find My Location” button
+    // Locate user
     const locateUser = () => {
       map.locate({ setView: true, maxZoom: 15 });
     };
@@ -74,24 +70,20 @@ const StoreLocatorPage: React.FC = () => {
         .addTo(map)
         .bindPopup("📍 You are here")
         .openPopup();
-      L.circle(e.latlng, {
-        color: "#0a4d40",
-        fillOpacity: 0.2,
-        radius: radius
-      }).addTo(map);
+      L.circle(e.latlng, { color: "#0a4d40", fillOpacity: 0.2, radius }).addTo(map);
     });
 
     map.on("locationerror", () => {
       alert("Unable to retrieve your location. Please allow location access.");
     });
 
-    // Button element for user location
+    // “My Location” button
     const locationBtn = new L.Control({ position: "topright" });
     locationBtn.onAdd = () => {
       const btn = L.DomUtil.create("button", "find-me-btn");
       btn.innerHTML = "📍 My Location";
       btn.style.cssText =
-        "background:#0a4d40;color:white;padding:6px 10px;border:none;border-radius:6px;cursor:pointer;font-size:13px;";
+        "background:#0a4d40;color:white;padding:6px 10px;border:none;border-radius:6px;cursor:pointer;font-size:13px;box-shadow:0 2px 6px rgba(0,0,0,0.2)";
       btn.onclick = locateUser;
       return btn;
     };
@@ -103,38 +95,32 @@ const StoreLocatorPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gradient-to-tr from-[#c3edea] via-[#a6e3e9] via-[#dffaf5] to-[#d6f2f0] bg-[length:400%_400%] animate-[calmGradient_20s_ease_infinite] font-[Segoe_UI] text-gray-800 p-6">
+    <div className="flex flex-col items-center min-h-screen bg-gradient-to-tr from-[#c3edea] via-[#e8fdf8] to-[#f8fffc] font-[Segoe_UI] text-gray-800 px-4 pb-10">
       {/* Header */}
-      <header className="flex items-center gap-3 bg-white/90 p-5 shadow-md w-full max-w-5xl rounded-t-2xl backdrop-blur-md mt-4">
-        <img
-          src="AllenCityPharmacylogo.png"
-    
-        className="h-12"
-        />
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-[#0a4d40]">
-            Allen City Pharmacy Store Locator
-          </h1>
-          <p className="text-sm text-gray-600">
-            Find the nearest Allen City Pharmacy branch and get directions easily.
-          </p>
-        </div>
-      </header>
+<header className="flex items-center gap-3 bg-white/90 p-5 shadow-md w-full max-w-5xl rounded-t-2xl backdrop-blur-md mt-6">
+  <img src={Logo} className="h-12" alt="Allen City Pharmacy" />
+  <div>
+    <h1 className="text-xl md:text-2xl font-bold text-[#0a4d40]">
+      Allen City Pharmacy Store Locator
+    </h1>
+    <p className="text-sm text-gray-600">
+      Find the nearest Allen City Pharmacy branch and get directions easily.
+    </p>
+  </div>
+</header>
 
-      {/* Map */}
-      <div
-        id="map"
-        className="w-full max-w-5xl h-[600px] rounded-b-2xl border border-gray-300 shadow-lg"
-      ></div>
+      {/* Map Section */}
+      <section className="w-full max-w-5xl bg-white rounded-b-2xl overflow-hidden border border-gray-300 shadow-md">
+        <div id="map" className="w-full h-[550px] rounded-b-2xl z-0"></div>
+      </section>
 
-      {/* Details Section */}
-      <section className="w-full max-w-5xl bg-white/90 shadow-md rounded-2xl mt-8 p-8 backdrop-blur-md">
-        <h2 className="text-xl font-semibold text-[#0a4d40] mb-5">
+      {/* Branch Details */}
+      <section className="w-full max-w-5xl bg-white/95 shadow-lg rounded-2xl mt-10 p-8 backdrop-blur-md">
+        <h2 className="text-xl font-semibold text-[#0a4d40] mb-6">
           🏥 Our Branches
         </h2>
 
         <div className="grid md:grid-cols-3 gap-6">
-          {/* Branch cards */}
           {[
             {
               name: "Main Branch",
@@ -160,21 +146,17 @@ const StoreLocatorPage: React.FC = () => {
           ].map((b, i) => (
             <div
               key={i}
-              className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 hover:shadow-lg transition"
+              className="bg-white border border-gray-200 rounded-xl shadow-sm p-5 hover:shadow-md transition"
             >
-              <h3 className="font-semibold text-lg text-[#0a4d40]">
-                {b.name}
-              </h3>
+              <h3 className="font-semibold text-lg text-[#0a4d40] mb-1">{b.name}</h3>
               <p className="text-sm">📍 {b.address}</p>
               <p className="text-sm">🕒 {b.hours}</p>
               <p className="text-sm">📞 {b.phone}</p>
               <p className="text-sm">✉️ {b.email}</p>
               <a
-                href={`https://www.google.com/maps?q=${encodeURIComponent(
-                  b.address
-                )}`}
+                href={`https://www.google.com/maps?q=${encodeURIComponent(b.address)}`}
                 target="_blank"
-                className="inline-block mt-2 text-sm text-[#0a4d40] font-semibold underline"
+                className="inline-block mt-2 text-sm text-[#0a4d40] font-semibold underline hover:text-green-700"
               >
                 View on Google Maps
               </a>
@@ -201,7 +183,7 @@ const StoreLocatorPage: React.FC = () => {
             For inquiries or prescription requests, email us at{" "}
             <a
               href="mailto:support@allencitypharmacy.com"
-              className="text-[#0a4d40] font-semibold underline"
+              className="text-[#0a4d40] font-semibold underline hover:text-green-700"
             >
               support@allencitypharmacy.com
             </a>{" "}
@@ -211,20 +193,9 @@ const StoreLocatorPage: React.FC = () => {
       </section>
 
       {/* Footer */}
-      <footer className="mt-8 text-center text-gray-600 text-sm pb-6">
+      <footer className="mt-10 text-center text-gray-600 text-sm pb-4">
         © 2025 Allen City Pharmacy. All Rights Reserved.
       </footer>
-
-      {/* Animation */}
-      <style>
-        {`
-          @keyframes calmGradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-          }
-        `}
-      </style>
     </div>
   );
 };

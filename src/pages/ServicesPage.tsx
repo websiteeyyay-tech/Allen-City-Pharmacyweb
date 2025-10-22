@@ -65,93 +65,93 @@ const ServicesPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-tr from-emerald-400 via-green-400 to-lime-300 text-gray-800 font-[Segoe_UI]">
-      {/* Hero Banner */}
-      <section
-  className="relative flex flex-col md:flex-row items-center justify-between max-w-7xl mx-auto py-20 px-6 gap-10 overflow-hidden rounded-2xl"
->
-  {/* Pharmacist Background Image */}
-  <div
-    className="absolute inset-0 bg-[url('https://www.brunet.ca/globalassets/sante/conseils-sante/role-du-pharmacien/role-du-pharmacien-big.jpg')] bg-cover bg-center opacity-20"
-    aria-hidden="true"
-  ></div>
+    <div className="flex flex-col bg-gradient-to-tr from-emerald-400 via-green-400 to-lime-300 text-gray-800 font-[Segoe_UI]">
+      {/* Hero Section */}
+      <section className="relative py-24 overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://www.brunet.ca/globalassets/sante/conseils-sante/role-du-pharmacien/role-du-pharmacien-big.jpg')] bg-cover bg-center opacity-25"></div>
+        <div className="absolute inset-0 bg-emerald-900/30 mix-blend-multiply"></div>
 
-  {/* Overlay for better contrast */}
-  <div className="absolute inset-0 bg-emerald-900/30 mix-blend-multiply"></div>
+        <div className="relative w-4/5 mx-auto flex flex-col md:flex-row items-center justify-between gap-12">
+          <motion.div
+            className="flex-1 space-y-6"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <h1 className="text-5xl md:text-6xl font-extrabold text-white drop-shadow-xl leading-tight">
+              Compassion at every step.<br />Care that truly puts you first.
+            </h1>
+            <p className="text-white/90 text-lg leading-relaxed max-w-xl">
+              At Allen City Pharmacy, we believe great healthcare goes beyond medicine.
+              With expert care and personal attention, we're here to help you live well every day.
+            </p>
+            <Link
+              to="/contact"
+              className="inline-block bg-white text-green-800 px-8 py-3 rounded-full font-semibold hover:bg-yellow-300 transition shadow-md"
+            >
+              Talk to a Pharmacist
+            </Link>
+          </motion.div>
 
-  {/* Content */}
-  <motion.div
-    className="relative flex-1 space-y-5"
-    initial={{ opacity: 0, y: 30 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.8 }}
-  >
-    <h1 className="text-5xl md:text-6xl font-extrabold text-white drop-shadow-lg">
-      Compassion at every step. Care that truly puts you first.
-    </h1>
-    <p className="text-white/90 text-lg leading-relaxed">
-      At Allen City Pharmacy, we believe great healthcare goes beyond medicine. With expert care and personal attention, we're here to help you live well every day.
-    </p>
-    <Link
-      to="/contact"
-      className="inline-block bg-white text-green-800 px-8 py-3 rounded-full font-semibold hover:bg-yellow-300 transition shadow-md"
-    >
-      Talk to a Pharmacist
-    </Link>
-  </motion.div>
-
-  <motion.div
-    className="relative flex-1"
-    initial={{ opacity: 0, scale: 0.9 }}
-    animate={{ opacity: 1, scale: 1 }}
-    transition={{ duration: 0.8 }}
-  >
-    <img
-      src="src/assets/services.png"
-      alt="Pharmacy services illustration"
-      className="rounded-2xl shadow-2xl w-full"
-    />
-  </motion.div>
-</section>
+          <motion.div
+            className="flex-1"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8 }}
+          >
+            <img
+              src="src/assets/services.png"
+              alt="Pharmacy services illustration"
+              className="rounded-2xl shadow-2xl border-4 border-white/20 w-full"
+            />
+          </motion.div>
+        </div>
+      </section>
 
       {/* Services Section */}
-      <section className="relative py-20 overflow-hidden">
-  {/* 🌈 Animated Gradient Background */}
-  <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 via-green-300 to-lime-300 bg-[length:400%_400%] animate-gradient" />
+      <section className="relative py-24 bg-gradient-to-b from-white/60 to-green-50 backdrop-blur-sm">
+        <div className="w-4/5 mx-auto text-center">
+          <motion.h2
+            className="text-4xl font-bold text-green-700 mb-14"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            Comprehensive Pharmacy Services
+          </motion.h2>
 
-  {/* Optional translucent overlay for better text contrast */}
-  <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px]" />
-
-  <div className="relative max-w-7xl mx-auto px-6 text-center">
-    <h2 className="text-4xl font-bold text-green-700 mb-12">
-      Comprehensive Pharmacy Services
-    </h2>
-    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-10">
-      {services.map((s) => (
-        <motion.div
-          key={s.title}
-          className="bg-white/80 backdrop-blur-md p-8 rounded-3xl shadow hover:shadow-xl transition text-left"
-          whileHover={{ scale: 1.03 }}
-        >
-          <div className="text-5xl mb-3">{s.icon}</div>
-          <h3 className="text-2xl font-semibold mb-2 text-green-700">
-            {s.title}
-          </h3>
-          <p className="text-gray-600 leading-relaxed">{s.desc}</p>
-        </motion.div>
-      ))}
-    </div>
-  </div>
-</section>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-10">
+            {services.map((s, i) => (
+              <motion.div
+                key={s.title}
+                className="bg-white/80 backdrop-blur-md p-8 rounded-3xl shadow-md hover:shadow-2xl border border-green-100 transition"
+                whileHover={{ scale: 1.05 }}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <div className="text-5xl mb-4">{s.icon}</div>
+                <h3 className="text-2xl font-semibold mb-3 text-green-700">
+                  {s.title}
+                </h3>
+                <p className="text-gray-600 leading-relaxed">{s.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Trust Badges */}
-      <section className="bg-green-100 py-12">
-        <div className="max-w-6xl mx-auto px-6 grid sm:grid-cols-2 md:grid-cols-4 gap-6 text-center">
-          {trustBadges.map((badge) => (
+      <section className="bg-green-100 py-16">
+        <div className="w-4/5 mx-auto grid sm:grid-cols-2 md:grid-cols-4 gap-6 text-center">
+          {trustBadges.map((badge, i) => (
             <motion.div
               key={badge.text}
-              className="p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition"
+              className="p-6 bg-white rounded-2xl shadow-md hover:shadow-lg transition border border-green-100"
               whileHover={{ scale: 1.05 }}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
             >
               <div className="text-5xl mb-3">{badge.icon}</div>
               <p className="font-semibold text-green-800">{badge.text}</p>
@@ -161,17 +161,26 @@ const ServicesPage: React.FC = () => {
       </section>
 
       {/* Testimonials */}
-      <section className="bg-white py-20">
-        <div className="max-w-6xl mx-auto px-6 text-center">
-          <h2 className="text-4xl font-bold text-green-700 mb-10">
+      <section className="bg-white py-24">
+        <div className="w-4/5 mx-auto text-center">
+          <motion.h2
+            className="text-4xl font-bold text-green-700 mb-12"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
             What Our Customers Say
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((t) => (
+          </motion.h2>
+
+          <div className="grid md:grid-cols-3 gap-10">
+            {testimonials.map((t, i) => (
               <motion.div
                 key={t.name}
-                className="bg-green-50 p-8 rounded-3xl shadow hover:shadow-lg transition"
+                className="bg-green-50 p-8 rounded-3xl shadow-md hover:shadow-xl transition border border-green-100"
                 whileHover={{ scale: 1.03 }}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.15 }}
               >
                 <p className="text-gray-700 italic mb-3 leading-relaxed">
                   “{t.feedback}”
@@ -185,19 +194,27 @@ const ServicesPage: React.FC = () => {
       </section>
 
       {/* Final CTA */}
-      <section className="bg-green-700 py-20 text-center text-white">
-        <h2 className="text-4xl font-bold mb-4">
-          Your Trusted Pharmacy in Allen City
-        </h2>
-        <p className="text-white/90 mb-6 max-w-3xl mx-auto text-lg">
-          From prescription refills to vaccinations, we strive to deliver seamless, patient-centered care that makes managing your health simple and stress-free.
-        </p>
-        <Link
-          to="/shop"
-          className="bg-white text-green-800 px-8 py-3 rounded-full font-semibold hover:bg-yellow-300 transition shadow-md"
-        >
-          Browse Health Products
-        </Link>
+      <section className="bg-gradient-to-r from-green-700 via-emerald-600 to-lime-500 py-20 text-center text-white">
+        <div className="w-4/5 mx-auto">
+          <motion.h2
+            className="text-4xl font-bold mb-5 drop-shadow-lg"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            Your Trusted Pharmacy in Allen City
+          </motion.h2>
+          <p className="text-white/90 mb-8 max-w-3xl mx-auto text-lg leading-relaxed">
+            From prescription refills to vaccinations, we deliver seamless, patient-centered
+            care that makes managing your health simple and stress-free.
+          </p>
+          <Link
+            to="/shop"
+            className="bg-white text-green-800 px-10 py-4 rounded-full font-semibold hover:bg-yellow-300 transition-all shadow-lg hover:scale-105"
+          >
+            Browse Health Products
+          </Link>
+        </div>
       </section>
     </div>
   );

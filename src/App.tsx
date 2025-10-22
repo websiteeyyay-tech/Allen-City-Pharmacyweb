@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Routes, Route } from "react-router-dom";
+import LoginPage from "./pages/LoginPage"; // 👈 Add this line
 
 // Components
 import Navbar from "./components/Navbar";
@@ -161,6 +162,8 @@ function App() {
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/store-locator" element={<StoreLocatorPage />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/login" element={<LoginPage />} />
+
 
           {/* Fallback route → HomePage (no cart) */}
           <Route path="*" element={<HomePage />} />

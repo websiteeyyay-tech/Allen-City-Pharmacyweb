@@ -1,254 +1,475 @@
-import React, { useState, useEffect } from "react";
+// src/pages/HomePage.tsx
+import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 
-/* -------------------------- Reusable Components -------------------------- */
+/**
+ * Premium HomePage — Allen City Pharmacy
+ * - Uses Tailwind CSS classes throughout
+ * - Uses Framer Motion for animations
+ * - Assumes images exist in /src/assets/
+ *
+ * Add: `npm install framer-motion` if not present
+ */
 
 const SectionTitle: React.FC<{ title: string; subtitle?: string }> = ({
   title,
   subtitle,
 }) => (
-  <div className="text-center mb-10">
-    <h2 className="text-3xl md:text-4xl font-bold text-green-700 mb-2">
+  <div className="text-center mb-8">
+    <h2 className="text-3xl md:text-4xl font-extrabold text-[#0a4d40] mb-2">
       {title}
     </h2>
     {subtitle && (
-      <p className="text-gray-600 text-base md:text-lg max-w-2xl mx-auto">
-        {subtitle}
-      </p>
+      <p className="text-gray-600 max-w-3xl mx-auto">{subtitle}</p>
     )}
   </div>
 );
 
-const ServiceCard: React.FC<{
-  title: string;
-  desc: string;
-  image: string;
-}> = ({ title, desc, image }) => (
-  <div className="bg-green-50/80 backdrop-blur p-8 rounded-2xl shadow-md hover:shadow-xl transition-transform hover:-translate-y-1">
-    <div className="flex justify-center mb-4">
-      <img
-        src={image}
-        alt={title}
-        className="w-20 h-20 object-cover rounded-full shadow"
-      />
-    </div>
-    <h3 className="text-lg md:text-xl font-semibold mb-2 text-green-700">
-      {title}
-    </h3>
-    <p className="text-gray-700 text-sm md:text-base">{desc}</p>
+/* -------------------------- Small UI pieces -------------------------- */
+
+const TrustItem: React.FC<{ icon: string; title: string; subtitle?: string }> = ({
+  icon,
+  title,
+  subtitle,
+}) => (
+  <div className="flex flex-col items-center text-center px-4 py-3 min-w-[180px]">
+    <div className="text-3xl mb-2">{icon}</div>
+    <div className="font-semibold text-[#065F46]">{title}</div>
+    {subtitle && <div className="text-sm text-gray-600 mt-1">{subtitle}</div>}
   </div>
 );
 
-const TestimonialCard: React.FC<{
-  name: string;
-  quote: string;
-  role: string;
-}> = ({ name, quote, role }) => (
-  <div className="bg-green-100/60 p-6 rounded-2xl shadow hover:shadow-lg transition">
-    <p className="text-gray-700 italic mb-4 leading-relaxed">“{quote}”</p>
-    <div className="text-green-700 font-semibold">{name}</div>
-    <div className="text-sm text-gray-600">{role}</div>
-  </div>
-);
-
-const InfoSection: React.FC<{
-  title: string;
-  text: string;
-  items: { icon: string; title: string; desc: string }[];
-}> = ({ title, text, items }) => (
-  <section className="bg-white/90 backdrop-blur-sm py-16">
-    <div className="max-w-7xl mx-auto px-4 md:px-6 text-center">
-      <SectionTitle title={title} subtitle={text} />
-      <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-8">
-        {items.map((item) => (
-          <div key={item.title} className="text-gray-700">
-            <div className="text-4xl mb-3">{item.icon}</div>
-            <h3 className="font-semibold text-xl mb-2 text-green-700">
-              {item.title}
-            </h3>
-            <p className="text-sm md:text-base">{item.desc}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  </section>
-);
-
-/* ----------------------------- Main Component ----------------------------- */
+/* -------------------------- Main Page -------------------------- */
 
 const HomePage: React.FC = () => {
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  // Carousel refs / state
+  const carouselRef = useRef<HTMLDivElement | null>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const [isHoveringCarousel, setIsHoveringCarousel] = useState(false);
+
+  // Testimonial index for simple pager
+  const [testimonialIndex, setTestimonialIndex] = useState(0);
+  const testimonialTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoaded(true), 500);
-    return () => clearTimeout(timer);
+    const t = setTimeout(() => setLoaded(true), 350);
+    return () => clearTimeout(t);
   }, []);
 
-  if (!isLoaded) {
+  // featured products
+  const featured = [
+    { name: "Vitamin C 1000mg", price: "₱499", img: "/src/assets/vitamin-c.jpg" },
+    { name: "Face Masks (50 pcs)", price: "₱299", img: "/src/assets/mask.jpg" },
+    { name: "Alcohol 70%", price: "₱199", img: "/src/assets/alcohol.jpg" },
+    { name: "Paracetamol 500mg", price: "₱149", img: "/src/assets/paracetamol.jpg" },
+    { name: "Skincare Serum", price: "₱899", img: "/src/assets/serum.jpg" },
+    { name: "Multivitamins + Iron", price: "₱699", img: "/src/assets/multivitamins.jpg" },
+    { name: "Hand Sanitizer 500ml", price: "₱159", img: "/src/assets/sanitizer.jpg" },
+    { name: "Collagen Drink", price: "₱1,099", img: "/src/assets/collagen.jpg" },
+  ];
+
+  // categories
+  const categories = [
+    { title: "Medicine", icon: "💊" },
+    { title: "Vitamins", icon: "💚" },
+    { title: "Skincare", icon: "🧴" },
+    { title: "Personal Care", icon: "🧼" },
+    { title: "Medical Devices", icon: "🩺" },
+    { title: "Baby & Mom", icon: "👶" },
+  ];
+
+  const services = [
+    {
+      title: "Prescription Refills",
+      desc: "Fast & accurate refills with pharmacist review.",
+      img: "/src/assets/prescription.jpg",
+    },
+    {
+      title: "Immunizations",
+      desc: "Flu, travel, & routine vaccines administered by pros.",
+      img: "/src/assets/flu.jpg",
+    },
+    {
+      title: "Health Consultations",
+      desc: "Private one-on-one pharmacist guidance.",
+      img: "/src/assets/consultation.webp",
+    },
+  ];
+
+  const testimonials = [
+    {
+      name: "Dr. Maria Thompson",
+      role: "Family Physician",
+      quote:
+        "Reliable product quality and fast service — Allen City Pharmacy is essential to our clinic's operations.",
+      avatar: "/src/assets/avatar1.png",
+    },
+    {
+      name: "David Chen",
+      role: "Clinic Administrator",
+      quote:
+        "Their delivery and stock management saved our workflow during peak seasons.",
+      avatar: "/src/assets/avatar2.png",
+    },
+    {
+      name: "Laura Adams",
+      role: "Local Resident",
+      quote: "Friendly pharmacists and clear advice. My go-to for prescriptions.",
+      avatar: "/src/assets/avatar3.png",
+    },
+  ];
+
+  // carousel check
+  const updateCarouselState = () => {
+    const el = carouselRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 10);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 10);
+  };
+
+  useEffect(() => {
+    updateCarouselState();
+    const el = carouselRef.current;
+    if (!el) return;
+    const onResize = () => updateCarouselState();
+    window.addEventListener("resize", onResize);
+    el.addEventListener("scroll", updateCarouselState);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      el.removeEventListener("scroll", updateCarouselState);
+    };
+  }, []);
+
+  // auto-scroll carousel (looping) — pauses on hover
+    useEffect(() => {
+      const el = carouselRef.current;
+      if (!el) return;
+      let rafId: number | null = null;
+      let last = performance.now();
+      const speed = 0.03; // px per ms
+      let running = true;
+  
+      function step(now: number) {
+        if (!running) return;
+        const delta = now - last;
+        last = now;
+        if (!isHoveringCarousel) {
+          el!.scrollLeft += delta * speed;
+          // loop when reach end
+          if (el!.scrollLeft + el!.clientWidth >= el!.scrollWidth - 2) {
+            el!.scrollTo({ left: 0 });
+          }
+        }
+        rafId = requestAnimationFrame(step);
+      }
+  
+      rafId = requestAnimationFrame(step);
+  
+      return () => {
+        if (rafId) cancelAnimationFrame(rafId);
+        running = false;
+      };
+    }, [isHoveringCarousel]);
+
+  // testimonials auto pager
+  useEffect(() => {
+    testimonialTimerRef.current = window.setInterval(() => {
+      setTestimonialIndex((i) => (i + 1) % testimonials.length);
+    }, 5000);
+
+    return () => {
+      if (testimonialTimerRef.current) {
+        clearInterval(testimonialTimerRef.current);
+      }
+    };
+  }, []);
+
+  if (!loaded) {
     return (
-      <div className="flex items-center justify-center h-screen bg-green-50">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-green-700 border-opacity-75"></div>
+      <div className="min-h-screen flex items-center justify-center bg-green-50">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-[#065F46] border-opacity-75" />
       </div>
     );
   }
 
   return (
-    <div className="relative flex flex-col text-gray-800 overflow-hidden">
-      {/* Background Layer */}
-      <div className="absolute inset-0 z-0">
-        <div
-          className="absolute inset-0 animate-gradient bg-[length:400%_400%] bg-gradient-to-br from-green-700 via-emerald-400 to-lime-200 opacity-90"
-          style={{ backgroundAttachment: "fixed" }}
-        ></div>
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-10 left-1/4 text-5xl md:text-6xl animate-float-slow">💊</div>
-          <div className="absolute top-1/2 left-1/3 text-6xl md:text-7xl animate-float-medium">💉</div>
-          <div className="absolute bottom-10 right-1/4 text-5xl md:text-6xl animate-float-slow">🧴</div>
-          <div className="absolute top-1/4 right-1/3 text-7xl md:text-8xl animate-float-fast">🩺</div>
-          <div className="absolute bottom-1/3 left-10 text-6xl md:text-7xl animate-float-medium">🩹</div>
-        </div>
-      </div>
-
-      {/* Hero */}
-      <section className="relative z-10 flex flex-col md:flex-row items-center justify-between max-w-7xl mx-auto py-20 px-4 md:px-6 gap-8">
-        <div className="relative z-10 flex-1 space-y-5 bg-black/40 p-6 md:p-10 rounded-3xl backdrop-blur-sm shadow-2xl">
-          <h1 className="text-4xl md:text-6xl font-extrabold text-white drop-shadow-lg">
-            Your Trusted Healthcare Partner
-          </h1>
-          <p className="text-white/90 text-base md:text-lg max-w-lg leading-relaxed">
-            Allen City Pharmacy provides a full portfolio of medical and
-            pharmaceutical products designed to improve care delivery and reduce
-            costs — with a commitment to compassion and quality.
-          </p>
-          <Link
-            to="/shop"
-            className="inline-block bg-green-700 text-white px-6 py-3 md:px-8 md:py-4 rounded-full font-semibold text-lg hover:bg-green-800 hover:scale-105 transform transition"
-          >
-            Explore Products
-          </Link>
-        </div>
-        <div className="flex-1">
-          <img
-            src="src/assets/pharmacy.jpg"
-            alt="Pharmacy Storefront"
-            className="rounded-3xl shadow-2xl w-full border-4 border-white/40"
+    <div className="text-gray-800 antialiased">
+      {/* HERO */}
+      <header className="relative bg-gradient-to-br from-[#066a4f] via-[#1fa584] to-[#b8f3d8] text-white py-20 overflow-hidden">
+        {/* subtle pattern / glow layers */}
+        <div className="absolute inset-0 opacity-20 pointer-events-none">
+          <div
+            className="absolute -left-40 -top-20 w-[560px] h-[560px] rounded-full blur-3xl bg-white/6"
+            aria-hidden
+          />
+          <div
+            className="absolute -right-40 -bottom-20 w-[480px] h-[480px] rounded-full blur-3xl bg-black/6"
+            aria-hidden
           />
         </div>
-      </section>
 
-      {/* Services */}
-      <section className="bg-white/80 backdrop-blur-sm py-16">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 text-center">
-          <SectionTitle title="Our Pharmacy Services" />
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-8">
-            <ServiceCard
-              title="Prescription Refills"
-              desc="Fast, convenient prescription services online or in-store with pharmacist support."
-              image="src/assets/prescription.jpg"
-            />
-            <ServiceCard
-              title="Immunizations"
-              desc="Stay protected with flu shots, travel vaccines, and COVID-19 immunizations."
-              image="src/assets/flu.jpg"
-            />
-            <ServiceCard
-              title="Health Consultations"
-              desc="One-on-one guidance from licensed pharmacists for better health management."
-              image="src/assets/consultation.webp"
-            />
+        <div className="w-4/5 mx-auto relative z-10">
+          <div className="flex flex-col md:flex-row items-center gap-8">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              className="flex-1"
+            >
+              <h1 className="text-3xl md:text-5xl font-extrabold leading-tight drop-shadow-sm">
+                Allen City Pharmacy — <span className="text-lime-200">Your health, simplified.</span>
+              </h1>
+              <p className="mt-4 text-gray-100 max-w-2xl">
+                Trusted medicines, fast delivery, and pharmacist support. We blend clinical reliability with
+                modern convenience.
+              </p>
+
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link
+                  to="/shop"
+                  className="inline-flex items-center gap-2 bg-white text-[#065F46] px-5 py-3 rounded-full font-semibold shadow hover:scale-105 transition"
+                >
+                  Shop Now
+                </Link>
+                <Link
+                  to="/services"
+                  className="inline-flex items-center gap-2 border border-white/40 text-white px-5 py-3 rounded-full hover:bg-white/10 transition"
+                >
+                  Our Services
+                </Link>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.9 }}
+              className="flex-1"
+            >
+              <div className="rounded-2xl overflow-hidden shadow-2xl border border-white/10">
+                <img
+                  src="/src/assets/pharmacy.jpg"
+                  alt="Allen City Pharmacy"
+                  className="w-full h-64 md:h-72 object-cover"
+                />
+              </div>
+            </motion.div>
           </div>
         </div>
-      </section>
+      </header>
 
-      {/* Quality and Commitment */}
-      <InfoSection
-        title="Our Commitment to Quality"
-        text="An expansive portfolio of high-quality products designed to serve the entire continuum of care."
-        items={[
-          {
-            icon: "⚙️",
-            title: "Quality-Engineered",
-            desc: "All our products meet or exceed healthcare compliance and performance standards.",
-          },
-          {
-            icon: "🚀",
-            title: "Streamlined Supply",
-            desc: "Ensuring availability, reliability, and efficiency for pharmacies and healthcare providers.",
-          },
-          {
-            icon: "💚",
-            title: "Patient-First Focus",
-            desc: "Helping you focus on patient outcomes while we take care of the details.",
-          },
-        ]}
-      />
-
-      {/* Testimonials */}
-      <section className="bg-white/90 backdrop-blur-sm py-16">
-        <div className="max-w-6xl mx-auto px-4 md:px-6 text-center">
+      {/* FEATURED CAROUSEL */}
+      <section className="py-12 bg-gradient-to-b from-white to-[#f0fff7]">
+        <div className="w-4/5 mx-auto relative">
           <SectionTitle
-            title="Trusted by Healthcare Professionals"
-            subtitle="Hear from those who rely on our pharmacy services every day."
+            title="Featured Health Essentials"
+            subtitle="Top picks this week — handpicked for wellness and everyday care."
           />
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-8">
-            <TestimonialCard
-              name="Dr. Maria Thompson"
-              role="Family Physician"
-              quote="Allen City Pharmacy’s reliability during critical times has been unmatched. Their product quality and service make a huge difference in patient care."
-            />
-            <TestimonialCard
-              name="David Chen"
-              role="Clinic Administrator"
-              quote="They provide consistent product availability and fast turnaround — essential for smooth clinic operations."
-            />
-            <TestimonialCard
-              name="Laura Adams"
-              role="Local Resident"
-              quote="The pharmacists are so caring. They helped me understand my new medication and made the process simple."
-            />
+
+          {/* left arrow */}
+          {canScrollLeft && (
+            <button
+              onClick={() => {
+                const el = carouselRef.current;
+                if (!el) return;
+                el.scrollBy({ left: -el.clientWidth * 0.7, behavior: "smooth" });
+              }}
+              className="hidden md:flex items-center justify-center absolute left-0 top-1/2 -translate-y-1/2 w-10 h-10 bg-[#065F46] text-white rounded-full shadow-md z-20"
+            >
+              ‹
+            </button>
+          )}
+
+          <div
+            ref={carouselRef}
+            onMouseEnter={() => setIsHoveringCarousel(true)}
+            onMouseLeave={() => setIsHoveringCarousel(false)}
+            className="flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide scroll-smooth"
+            style={{ WebkitOverflowScrolling: "touch" }}
+          >
+            {featured.map((p, i) => (
+              <motion.div
+                key={p.name + i}
+                whileHover={{ scale: 1.03 }}
+                className="snap-center flex-shrink-0 w-64 bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden"
+              >
+                <div className="relative">
+                  <img src={p.img} alt={p.name} className="w-full h-44 object-cover" />
+                  {/* badge */}
+                  <div className="absolute left-3 top-3 px-2 py-1 bg-[#065F46] text-white text-xs rounded">
+                    Bestseller
+                  </div>
+                </div>
+
+                <div className="p-4">
+                  <div className="flex items-baseline justify-between">
+                    <h3 className="font-semibold text-[#065F46]">{p.name}</h3>
+                    <div className="text-lg font-bold">{p.price}</div>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-2">Trusted, effective, and easy to use.</p>
+
+                  <div className="mt-4 flex gap-2">
+                    <button className="flex-1 bg-[#065F46] text-white py-2 rounded-full font-semibold hover:opacity-95">
+                      Add to cart
+                    </button>
+                    <button className="px-3 py-2 rounded-full border border-gray-200 text-gray-600">
+                      🔍
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* right arrow */}
+          {canScrollRight && (
+            <button
+              onClick={() => {
+                const el = carouselRef.current;
+                if (!el) return;
+                el.scrollBy({ left: el.clientWidth * 0.7, behavior: "smooth" });
+              }}
+              className="hidden md:flex items-center justify-center absolute right-0 top-1/2 -translate-y-1/2 w-10 h-10 bg-[#065F46] text-white rounded-full shadow-md z-20"
+            >
+              ›
+            </button>
+          )}
+        </div>
+      </section>
+
+      {/* CATEGORIES */}
+      <section className="py-12">
+        <div className="w-4/5 mx-auto">
+          <SectionTitle title="Shop by Category" subtitle="Find products faster — browse popular categories." />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
+            {categories.map((c) => (
+              <motion.div
+                key={c.title}
+                whileHover={{ y: -6 }}
+                className="bg-white rounded-xl p-4 flex flex-col items-center gap-2 shadow-sm hover:shadow-lg border"
+              >
+                <div className="text-3xl">{c.icon}</div>
+                <div className="font-semibold text-[#065F46]">{c.title}</div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
-{/* Contact Section */}
-<section className="bg-gradient-to-br from-green-700 to-emerald-600 text-white py-20 text-center relative overflow-hidden">
-  <div className="max-w-6xl mx-auto px-6 md:px-8 space-y-6 relative z-10">
-    <h2 className="text-3xl md:text-4xl font-extrabold drop-shadow-lg">
-      Visit or Contact Us
-    </h2>
-
-    <p className="text-base md:text-lg max-w-2xl mx-auto text-white/95 leading-relaxed">
-      Your health deserves personalized care. Visit our store, reach out, or explore
-      online ordering — we’re always here for you.
-    </p>
-
-    <ul className="mt-8 space-y-3 text-lg font-medium">
-      <li className="flex justify-center items-center gap-2">
-        <span role="img" aria-label="location">📍</span> 123 Main Street, Allen City
-      </li>
-      <li className="flex justify-center items-center gap-2">
-        <span role="img" aria-label="clock">⏰</span> Mon–Fri 9 am–7 pm | Sat 9 am–5 pm | Sun Closed
-      </li>
-      <li className="flex justify-center items-center gap-2">
-        <span role="img" aria-label="phone">📞</span> (555) 123-4567
-      </li>
-    </ul>
-
-    <div className="pt-8">
-      <a
-        href="tel:5551234567"
-        className="inline-block bg-white text-green-700 font-semibold px-8 py-3 rounded-full shadow-md hover:bg-green-100 transition-transform hover:scale-105"
-      >
-        Call Us Today
-      </a>
+      {/* SERVICES */}
+      <section className="py-12 bg-gradient-to-b from-white to-[#f7fffb]">
+        <div className="w-4/5 mx-auto">
+          <SectionTitle title="Our Services" subtitle="Professional services to support your health journey." />
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {services.map((s) => (
+              <motion.div
+                key={s.title}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="bg-white/90 rounded-2xl p-6 shadow-lg border border-gray-100"
+              >
+                <div className="rounded-lg overflow-hidden mb-4 h-40">
+                  <img src={s.img} alt={s.title} className="w-full h-full object-cover" />
+                </div>
+                <h4 className="text-lg font-semibold text-[#065F46]">{s.title}</h4>
+                <p className="text-gray-600 mt-2">{s.desc}</p>
+                <div className="mt-4">
+                  <Link to="/services" className="text-[#065F46] font-semibold underline">
+                    Learn more →
+                  </Link>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+{/* Trust strip */}
+<div className="flex justify-center mt-12">
+  <motion.div
+    initial={{ opacity: 0, y: 12 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.2 }}
+    className="bg-white/90 rounded-full py-3 px-8 shadow-lg border border-green-100 backdrop-blur-md"
+  >
+    <div className="flex gap-8 items-center">
+      <TrustItem icon="🔬" title="Clinically Tested" subtitle="Third-party checked" />
+      <div className="w-px h-6 bg-gray-200" />
+      <TrustItem icon="✅" title="100% Genuine" subtitle="Verified brands" />
+      <div className="w-px h-6 bg-gray-200" />
+      <TrustItem icon="⏱️" title="Same-day Delivery" subtitle="Available in many areas" />
     </div>
-  </div>
+  </motion.div>
+</div>
 
-  {/* Optional Decorative Element */}
-  <div className="absolute bottom-6 right-6 opacity-40">
-    <img src="src/assets/contact-icon.png" alt="Contact Icon" className="w-12 h-12" />
-  </div>
-</section>
+      {/* TESTIMONIALS */}
+      <section className="py-12">
+        <div className="w-4/5 mx-auto text-center">
+          <SectionTitle title="What professionals say" subtitle="Trusted by doctors, clinics and customers." />
+
+          <div className="relative mt-6">
+            <motion.div
+              key={testimonialIndex}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.6 }}
+              className="bg-white rounded-2xl p-8 shadow-lg max-w-3xl mx-auto"
+            >
+              <div className="flex items-center gap-4">
+                <img
+                  src={testimonials[testimonialIndex].avatar}
+                  alt={testimonials[testimonialIndex].name}
+                  className="w-16 h-16 rounded-full object-cover"
+                />
+                <div className="text-left">
+                  <div className="font-semibold text-[#065F46]">
+                    {testimonials[testimonialIndex].name}
+                  </div>
+                  <div className="text-sm text-gray-500">{testimonials[testimonialIndex].role}</div>
+                </div>
+              </div>
+
+              <p className="mt-4 text-gray-700 italic">“{testimonials[testimonialIndex].quote}”</p>
+
+              <div className="mt-4 flex justify-center gap-2">
+                {testimonials.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setTestimonialIndex(i)}
+                    className={`w-2 h-2 rounded-full ${i === testimonialIndex ? "bg-[#065F46]" : "bg-gray-300"}`}
+                    aria-label={`Go to testimonial ${i + 1}`}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* NEWSLETTER */}
+      <section className="py-12 bg-gradient-to-r from-[#eafef6] to-white">
+        <div className="w-4/5 mx-auto">
+          <div className="rounded-2xl bg-white/95 p-8 shadow-xl flex flex-col md:flex-row items-center gap-6 border">
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold text-[#065F46]">Get exclusive offers & health tips</h3>
+              <p className="text-gray-600 mt-2">Subscribe to our newsletter for promotions and wellness advice.</p>
+            </div>
+            <form className="flex gap-3 w-full md:w-auto">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className="flex-1 md:w-[360px] px-4 py-3 rounded-full border focus:outline-none focus:ring-2 focus:ring-[#b8f3d8]"
+              />
+              <button className="bg-[#065F46] text-white px-6 py-3 rounded-full font-semibold hover:opacity-95">Subscribe</button>
+            </form>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };

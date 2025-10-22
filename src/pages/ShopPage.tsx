@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Product {
   id: number;
@@ -121,14 +122,12 @@ export default function ShopPage({ onAdd }: ShopPageProps) {
   const [sortBy, setSortBy] = useState("featured");
   const navigate = useNavigate();
 
-  // Filter and sort logic
   const filteredProducts = useMemo(() => {
     let filtered = products.filter(
       (p) =>
         (category === "All" || p.category === category) &&
         p.name.toLowerCase().includes(search.toLowerCase())
     );
-
     switch (sortBy) {
       case "priceLow":
         filtered.sort((a, b) => a.price - b.price);
@@ -144,215 +143,222 @@ export default function ShopPage({ onAdd }: ShopPageProps) {
   }, [category, search, sortBy]);
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(-45deg,#006d53,#e56b1f,#f8f8f8,#006d53)] bg-[length:400%_400%] animate-[smoothFlow_25s_ease_infinite] text-gray-800 font-sans relative overflow-x-hidden">
+    <div className="min-h-screen bg-white text-gray-800 font-[Segoe_UI]">
       {/* Hero Section */}
-      <section className="relative overflow-hidden h-[400px] flex items-center justify-center text-center text-white">
+      <section className="relative h-[420px] flex items-center justify-center text-center text-white overflow-hidden">
         <img
           src="https://images.pexels.com/photos/3825529/pexels-photo-3825529.jpeg?auto=compress&cs=tinysrgb&w=1600"
           alt="Pharmacy background"
-          className="absolute inset-0 object-cover w-full h-full brightness-[0.5]"
+          className="absolute inset-0 w-full h-full object-cover brightness-[0.45]"
         />
-        <div className="relative z-10 px-4">
-          <h1 className="text-5xl font-extrabold mb-3 drop-shadow-lg">
-            Your Health, Our Priority
+        <div className="absolute inset-0 bg-emerald-900/40 mix-blend-multiply" />
+        <motion.div
+          className="relative z-10 max-w-3xl mx-auto px-4"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+        >
+          <h1 className="text-5xl md:text-6xl font-extrabold mb-4 drop-shadow-lg">
+            Trusted Health Essentials
           </h1>
-          <p className="text-lg max-w-xl mx-auto mb-6 text-gray-100">
-            Shop the finest healthcare essentials, from vitamins to medical
-            tools, curated with care.
+          <p className="text-lg md:text-xl text-white/90 mb-8">
+            Everything your family needs for daily wellness — delivered with care.
           </p>
           <a
             href="#products"
-            className="bg-[#e56b1f] hover:bg-[#cf5d16] px-6 py-3 rounded-lg font-semibold shadow-lg"
+            className="inline-block bg-white text-green-800 px-8 py-3 rounded-full font-semibold hover:bg-yellow-300 transition shadow-md"
           >
-            Browse Products
+            Shop Now
           </a>
-        </div>
+        </motion.div>
       </section>
 
-      {/* Top Controls */}
-      <div className="max-w-7xl mx-auto flex flex-wrap justify-between gap-3 items-center px-4 mt-6">
-        <input
-          type="text"
-          placeholder="Search for health essentials..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 min-w-[220px] border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#006d53]"
-        />
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
-        >
-          <option>All</option>
-          <option>Medicine</option>
-          <option>Vitamins</option>
-          <option>Medical Devices</option>
-          <option>Baby Care</option>
-          <option>Hygiene</option>
-          <option>Safety</option>
-        </select>
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
-        >
-          <option value="featured">Featured</option>
-          <option value="priceLow">Price: Low to High</option>
-          <option value="priceHigh">Price: High to Low</option>
-          <option value="rating">Top Rated</option>
-        </select>
-        <button
-          className="flex items-center gap-2 bg-[#006d53] text-white px-4 py-2 rounded-md font-semibold hover:bg-[#005743] transition"
-          onClick={() => navigate("/checkout")}
-        >
-          <ShoppingCart size={18} />
-          Go to Checkout
-        </button>
+      {/* Filter Bar */}
+      <div className="sticky top-0 z-30 bg-white/90 backdrop-blur-md shadow-sm py-4 border-b border-gray-200">
+        <div className="max-w-6xl w-[80%] mx-auto flex flex-wrap justify-between gap-3 items-center">
+          <input
+            type="text"
+            placeholder="Search for health essentials..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="flex-1 min-w-[220px] border border-gray-300 rounded-full px-4 py-2 focus:ring-2 focus:ring-green-500"
+          />
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="border border-gray-300 rounded-full px-4 py-2 text-sm"
+          >
+            <option>All</option>
+            <option>Medicine</option>
+            <option>Vitamins</option>
+            <option>Medical Devices</option>
+            <option>Baby Care</option>
+            <option>Hygiene</option>
+            <option>Safety</option>
+          </select>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="border border-gray-300 rounded-full px-4 py-2 text-sm"
+          >
+            <option value="featured">Featured</option>
+            <option value="priceLow">Price: Low to High</option>
+            <option value="priceHigh">Price: High to Low</option>
+            <option value="rating">Top Rated</option>
+          </select>
+          <button
+            className="flex items-center gap-2 bg-green-600 text-white px-5 py-2 rounded-full font-semibold hover:bg-green-700 transition shadow-md"
+            onClick={() => navigate("/checkout")}
+          >
+            <ShoppingCart size={18} />
+            Checkout
+          </button>
+        </div>
       </div>
 
-      {/* Product Grid */}
-      <main id="products" className="max-w-7xl mx-auto px-4 mt-8">
+      {/* Product Grid (no background) */}
+      <main id="products" className="max-w-6xl w-[80%] mx-auto mt-12 mb-20">
         {filteredProducts.length === 0 ? (
-          <p className="text-center text-gray-600 mt-10">
+          <p className="text-center text-gray-600 mt-12 text-lg">
             No products found. Try adjusting filters.
           </p>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {filteredProducts.map((p) => (
-              <div
+              <motion.div
                 key={p.id}
-                className="bg-white rounded-xl shadow hover:shadow-lg border border-gray-100 cursor-pointer transition-transform hover:-translate-y-1 group relative overflow-hidden"
+                className="bg-white border border-gray-100 rounded-3xl shadow-md hover:shadow-2xl transition-all cursor-pointer group relative overflow-hidden"
+                whileHover={{ scale: 1.02 }}
                 onClick={() => setSelected(p)}
               >
-                <img
-                  src={p.image}
-                  alt={p.name}
-                  className="w-full h-48 object-cover rounded-t-xl transition-transform duration-300 group-hover:scale-105"
-                />
-                <div className="p-4">
-                  <h3 className="font-bold text-[#006d53] text-sm mb-1 truncate">
+                <div className="overflow-hidden rounded-t-3xl">
+                  <img
+                    src={p.image}
+                    alt={p.name}
+                    className="w-full h-56 object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                </div>
+                <div className="p-5">
+                  <h3 className="font-semibold text-green-800 text-lg mb-1 line-clamp-2">
                     {p.name}
                   </h3>
-                  <div className="flex justify-between text-sm mb-1">
-                    <div className="text-yellow-500">
-                      ⭐ {p.rating} ({p.reviews.toLocaleString()})
-                    </div>
-                    <div className="text-[#e56b1f] font-bold">
+                  <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                    {p.description}
+                  </p>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[#e56b1f] font-bold text-xl">
                       ${p.price.toFixed(2)}
-                    </div>
+                    </span>
+                    {p.oldPrice && (
+                      <span className="text-xs text-gray-400 line-through">
+                        ${p.oldPrice.toFixed(2)}
+                      </span>
+                    )}
                   </div>
-                  {p.oldPrice && (
-                    <div className="text-xs text-gray-400 line-through">
-                      ${p.oldPrice.toFixed(2)}
-                    </div>
-                  )}
-                  <div className="flex items-center mt-2">
-                    <div
-                      className={`text-xs font-semibold px-2 py-1 rounded-md ${
+                  <div className="flex items-center justify-between">
+                    <span
+                      className={`text-xs font-semibold px-2 py-1 rounded ${
                         p.stock === "Low stock"
-                          ? "text-[#e67e22] bg-orange-50"
+                          ? "bg-orange-50 text-[#e67e22]"
                           : p.stock === "Out of stock"
-                          ? "text-red-600 bg-red-50"
-                          : "text-[#006d53] bg-green-50"
+                          ? "bg-red-50 text-red-600"
+                          : "bg-green-50 text-[#006d53]"
                       }`}
                     >
                       {p.stock}
-                    </div>
+                    </span>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         onAdd(p);
                       }}
-                      className="ml-auto bg-[#006d53] text-white text-xs px-3 py-1 rounded-md font-bold hover:bg-[#005743] transition"
+                      className="text-xs bg-green-600 text-white px-3 py-1 rounded-full font-semibold hover:bg-green-700 transition shadow-sm"
                     >
                       Add
                     </button>
                   </div>
                 </div>
 
-                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
-                  <span className="bg-white text-[#006d53] px-4 py-2 rounded-md font-semibold shadow-md">
+                {/* Quick View overlay */}
+                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
+                  <span className="bg-white text-green-800 px-4 py-2 rounded-full font-semibold shadow-md">
                     Quick View
                   </span>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         )}
       </main>
 
       {/* Product Modal */}
-      {selected && (
-        <div
-          className="fixed inset-0 bg-black/60 flex justify-center items-center z-50"
-          onClick={() => setSelected(null)}
-        >
-          <div
-            className="bg-white rounded-xl shadow-lg p-6 max-w-md w-[90%] relative animate-[popupIn_0.3s_ease]"
-            onClick={(e) => e.stopPropagation()}
+      <AnimatePresence>
+        {selected && (
+          <motion.div
+            className="fixed inset-0 bg-black/60 flex justify-center items-center z-50"
+            onClick={() => setSelected(null)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
           >
-            <button
-              onClick={() => setSelected(null)}
-              className="absolute top-3 right-4 text-gray-600 text-xl"
+            <motion.div
+              className="bg-white rounded-3xl shadow-2xl p-8 max-w-lg w-[90%] relative border-t-4 border-green-500"
+              onClick={(e) => e.stopPropagation()}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
             >
-              ×
-            </button>
-            <img
-              src={selected.image}
-              alt={selected.name}
-              className="rounded-lg mb-4 max-h-64 object-cover mx-auto"
-            />
-            <h2 className="text-xl font-bold text-[#006d53]">
-              {selected.name}
-            </h2>
-            <p className="text-yellow-500 mt-1">
-              ⭐ {selected.rating} ({selected.reviews.toLocaleString()} reviews)
-            </p>
-            <div className="flex gap-2 items-center my-3">
-              <span className="text-2xl font-bold text-[#e56b1f]">
-                ${selected.price.toFixed(2)}
-              </span>
-              {selected.oldPrice && (
-                <span className="text-gray-400 line-through">
-                  ${selected.oldPrice.toFixed(2)}
-                </span>
-              )}
-            </div>
-            <p className="text-sm text-gray-600 leading-relaxed">
-              {selected.description}
-            </p>
-            <div className="mt-5 flex gap-3">
-              <button
-                onClick={() => {
-                  onAdd(selected);
-                  setSelected(null);
-                }}
-                className="bg-[#006d53] text-white px-4 py-2 rounded-md font-semibold hover:bg-[#005743] transition"
-              >
-                Add to Cart
-              </button>
               <button
                 onClick={() => setSelected(null)}
-                className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md font-semibold hover:bg-gray-200 transition"
+                className="absolute top-3 right-4 text-gray-600 text-xl hover:text-gray-800"
               >
-                Continue Shopping
+                ×
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <style>{`
-        @keyframes smoothFlow {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        @keyframes popupIn {
-          from { transform: scale(0.85); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
-        }
-      `}</style>
+              <img
+                src={selected.image}
+                alt={selected.name}
+                className="rounded-2xl mb-5 max-h-64 object-cover mx-auto"
+              />
+              <h2 className="text-2xl font-bold text-green-800 mb-2">
+                {selected.name}
+              </h2>
+              <p className="text-yellow-500 mb-2">
+                ⭐ {selected.rating} ({selected.reviews.toLocaleString()} reviews)
+              </p>
+              <div className="flex gap-2 items-center mb-4">
+                <span className="text-3xl font-bold text-[#e56b1f]">
+                  ${selected.price.toFixed(2)}
+                </span>
+                {selected.oldPrice && (
+                  <span className="text-gray-400 line-through">
+                    ${selected.oldPrice.toFixed(2)}
+                  </span>
+                )}
+              </div>
+              <p className="text-gray-600 leading-relaxed mb-6 text-sm">
+                {selected.description}
+              </p>
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => {
+                    onAdd(selected);
+                    setSelected(null);
+                  }}
+                  className="bg-green-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-green-700 transition shadow-md"
+                >
+                  Add to Cart
+                </button>
+                <button
+                  onClick={() => setSelected(null)}
+                  className="bg-gray-100 text-gray-700 px-6 py-2 rounded-full font-semibold hover:bg-gray-200 transition"
+                >
+                  Continue Shopping
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
