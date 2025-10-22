@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using PharmacyApp.Core.Entities;
 using PharmacyApp.Core.Interfaces;
+using PharmacyApp.Core.Application.DTOs;
+
 
 namespace PharmacyApp.API.Controllers
 {
@@ -27,11 +29,12 @@ namespace PharmacyApp.API.Controllers
         }
 
         [HttpPost]
-        public IActionResult CreateOrder(Order order)
-        {
-            _orderService.CreateOrder(order);
-            return Ok(order);
-        }
+public IActionResult CreateOrder([FromBody] OrderRequestDto orderDto)
+{
+    var createdOrder = _orderService.CreateOrder(orderDto);
+    return Ok(createdOrder);
+}
+
 
         [HttpDelete("{id}")]
         public IActionResult DeleteOrder(int id)

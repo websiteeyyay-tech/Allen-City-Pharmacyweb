@@ -1,7 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import axios from "axios";
 
 interface Product {
   id: number;
@@ -20,107 +21,34 @@ interface ShopPageProps {
   onAdd: (product: Product) => void;
 }
 
-const products: Product[] = [
-  {
-    id: 1,
-    name: "Pain Relief Tablets - 20 pack",
-    price: 8.99,
-    oldPrice: 11.99,
-    rating: 4.8,
-    reviews: 1200,
-    category: "Medicine",
-    image:
-      "https://www.deepheat.com.au/cdn/shop/files/27933NAPROXENPAINRELIEF30PK3DHIRES_1200x1200.png?v=1731997526",
-    description:
-      "Fast-acting pain relief tablets ideal for headaches, muscle pain, and body aches. 20 tablets per pack.",
-    stock: "In stock",
-  },
-  {
-    id: 2,
-    name: "Vitamin D3 - 60 softgels",
-    price: 10.5,
-    oldPrice: 13.0,
-    rating: 4.7,
-    reviews: 860,
-    category: "Vitamins",
-    image: "https://medlineplus.gov/images/Vitamins_share.jpg",
-    description:
-      "Vitamin D3 supports bone, immune, and mood health. 60 softgels per bottle.",
-    stock: "Low stock",
-  },
-  {
-    id: 3,
-    name: "Cough Syrup - 150ml",
-    price: 6.75,
-    oldPrice: 8.0,
-    rating: 4.6,
-    reviews: 430,
-    category: "Medicine",
-    image: "https://pics.walgreens.com/prodimg/671386/900.jpg",
-    description:
-      "Provides fast relief from dry and chesty coughs. Non-drowsy formula suitable for daytime use.",
-    stock: "In stock",
-  },
-  {
-    id: 4,
-    name: "Digital Thermometer",
-    price: 9.99,
-    rating: 4.7,
-    reviews: 760,
-    category: "Medical Devices",
-    image:
-      "https://m.media-amazon.com/images/I/61OrvhuAJhL._UF1000,1000_QL80_.jpg",
-    description:
-      "Accurate and fast-reading thermometer suitable for oral, rectal, and underarm use.",
-    stock: "In stock",
-  },
-  {
-    id: 5,
-    name: "First Aid Kit - Compact",
-    price: 24.99,
-    oldPrice: 29.99,
-    rating: 4.5,
-    reviews: 320,
-    category: "Safety",
-    image:
-      "https://target.scene7.com/is/image/Target/GUEST_e7f46325-c1a2-4baa-936d-d37de56b3ad7",
-    description:
-      "Compact first aid kit with essential supplies for home, office, and travel emergencies.",
-    stock: "In stock",
-  },
-  {
-    id: 6,
-    name: "Baby Formula - 400g",
-    price: 18.2,
-    rating: 4.6,
-    reviews: 540,
-    category: "Baby Care",
-    image:
-      "https://www.forthepeople.com/sites/default/files/styles/mm-image/545x306/shutterstock_2387752027cabbd356dfd7c23de3f64833fdbdc651.webp",
-    description:
-      "Premium baby formula with essential nutrients for healthy development. Gentle and easy to digest.",
-    stock: "Low stock",
-  },
-  {
-    id: 7,
-    name: "Hand Sanitizer 500 ml",
-    price: 5.99,
-    rating: 4.9,
-    reviews: 2100,
-    category: "Hygiene",
-    image: "https://i.ebayimg.com/images/g/rAIAAOSwobtlWS4Q/s-l1200.jpg",
-    description:
-      "Kills 99.9% of germs and bacteria. Fast-drying formula with moisturizing ingredients.",
-    stock: "In stock",
-  },
-];
-
 export default function ShopPage({ onAdd }: ShopPageProps) {
+  const [products, setProducts] = useState<Product[]>([]);
   const [selected, setSelected] = useState<Product | null>(null);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [sortBy, setSortBy] = useState("featured");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  // ✅ Fetch from backend
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get("https://localhost:5001/api/products");
+        setProducts(res.data);
+        setError("");
+      } catch (err: any) {
+        console.error("Failed to fetch products:", err);
+        setError("Unable to load products. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   const filteredProducts = useMemo(() => {
     let filtered = products.filter(
@@ -140,7 +68,7 @@ export default function ShopPage({ onAdd }: ShopPageProps) {
         break;
     }
     return filtered;
-  }, [category, search, sortBy]);
+  }, [products, category, search, sortBy]);
 
   return (
     <div className="min-h-screen bg-white text-gray-800 font-[Segoe_UI]">
@@ -216,9 +144,15 @@ export default function ShopPage({ onAdd }: ShopPageProps) {
         </div>
       </div>
 
-      {/* Product Grid (no background) */}
+      {/* Product Grid */}
       <main id="products" className="max-w-6xl w-[80%] mx-auto mt-12 mb-20">
-        {filteredProducts.length === 0 ? (
+        {loading ? (
+          <p className="text-center text-gray-500 text-lg mt-10">
+            Loading products...
+          </p>
+        ) : error ? (
+          <p className="text-center text-red-600 text-lg mt-10">{error}</p>
+        ) : filteredProducts.length === 0 ? (
           <p className="text-center text-gray-600 mt-12 text-lg">
             No products found. Try adjusting filters.
           </p>
@@ -247,11 +181,11 @@ export default function ShopPage({ onAdd }: ShopPageProps) {
                   </p>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[#e56b1f] font-bold text-xl">
-                      ${p.price.toFixed(2)}
+                      ₱{p.price.toFixed(2)}
                     </span>
                     {p.oldPrice && (
                       <span className="text-xs text-gray-400 line-through">
-                        ${p.oldPrice.toFixed(2)}
+                        ₱{p.oldPrice.toFixed(2)}
                       </span>
                     )}
                   </div>
@@ -277,13 +211,6 @@ export default function ShopPage({ onAdd }: ShopPageProps) {
                       Add
                     </button>
                   </div>
-                </div>
-
-                {/* Quick View overlay */}
-                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
-                  <span className="bg-white text-green-800 px-4 py-2 rounded-full font-semibold shadow-md">
-                    Quick View
-                  </span>
                 </div>
               </motion.div>
             ))}
@@ -327,11 +254,11 @@ export default function ShopPage({ onAdd }: ShopPageProps) {
               </p>
               <div className="flex gap-2 items-center mb-4">
                 <span className="text-3xl font-bold text-[#e56b1f]">
-                  ${selected.price.toFixed(2)}
+                  ₱{selected.price.toFixed(2)}
                 </span>
                 {selected.oldPrice && (
                   <span className="text-gray-400 line-through">
-                    ${selected.oldPrice.toFixed(2)}
+                    ₱{selected.oldPrice.toFixed(2)}
                   </span>
                 )}
               </div>

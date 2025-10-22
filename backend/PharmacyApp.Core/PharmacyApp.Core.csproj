@@ -6,4 +6,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <!-- ⚠️  DO NOT reference Infrastructure or API from Core -->
+  <!-- Remove any <ProjectReference> blocks -->
+
 </Project>

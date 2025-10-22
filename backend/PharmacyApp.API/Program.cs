@@ -41,8 +41,19 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
     });
 });
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp",
+        policy => policy
+            .WithOrigins("https://localhost:5173", "https://<your-username>.github.dev")
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
 
 var app = builder.Build();
+
+app.UseCors("AllowReactApp");
+
 
 // ✅ Enable CORS before controller mapping
 app.UseCors("AllowFrontend");

@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using PharmacyApp.Core.Entities;
+using PharmacyApp.Core.Application.DTOs;
 
 namespace PharmacyApp.Core.Interfaces
 {
@@ -6,7 +8,7 @@ namespace PharmacyApp.Core.Interfaces
     {
         IEnumerable<Order> GetAllOrders();
         Order? GetOrderById(int id);
-        void CreateOrder(Order order);
+        Order CreateOrder(OrderRequestDto orderDto);
         void DeleteOrder(int id);
     }
 }

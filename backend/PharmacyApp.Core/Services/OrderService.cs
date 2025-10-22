@@ -1,27 +1,67 @@
+using PharmacyApp.Core.Application.DTOs;
 using PharmacyApp.Core.Entities;
 using PharmacyApp.Core.Interfaces;
+using PharmacyApp.Infrastructure.Data;
 
-namespace PharmacyApp.Core.Services
+namespace PharmacyApp.Infrastructure.Services
 {
     public class OrderService : IOrderService
     {
-        private readonly List<Order> _orders = new();
+        private readonly PharmacyDbContext _context;
 
-        public IEnumerable<Order> GetAllOrders() => _orders;
-
-        public Order? GetOrderById(int id) => _orders.FirstOrDefault(o => o.Id == id);
-
-        public void CreateOrder(Order order)
+        public OrderService(PharmacyDbContext context)
         {
-            order.Id = _orders.Count + 1;
-            _orders.Add(order);
+            _context = context;
+        }
+
+        public IEnumerable<Order> GetAllOrders()
+        {
+            return _context.Orders.ToList();
+        }
+
+        public Order? GetOrderById(int id)
+        {
+            return _context.Orders.Find(id);
+        }
+
+        public Order CreateOrder(OrderRequestDto orderDto)
+        {
+            var order = new Order
+            {
+                // Map basic info
+                DeliveryMethod = orderDto.DeliveryMethod,
+                OrderNotes = orderDto.OrderNotes,
+
+                // Example of flattening nested data (assuming your Order entity has these)
+                CustomerName = $"{orderDto.Customer.FirstName} {orderDto.Customer.LastName}",
+                CustomerEmail = orderDto.Customer.Email,
+                CustomerAddress = $"{orderDto.Customer.Address}, {orderDto.Customer.City}, {orderDto.Customer.State}, {orderDto.Customer.Zip}",
+                CustomerPhone = orderDto.Customer.Phone,
+
+                // Totals
+                Subtotal = orderDto.Totals.Subtotal,
+                Shipping = orderDto.Totals.Shipping,
+                Tax = orderDto.Totals.Tax,
+                Total = orderDto.Totals.Total,
+
+                // Store order date
+                OrderDate = DateTime.UtcNow
+            };
+
+            _context.Orders.Add(order);
+            _context.SaveChanges();
+
+            return order;
         }
 
         public void DeleteOrder(int id)
         {
-            var order = _orders.FirstOrDefault(o => o.Id == id);
+            var order = _context.Orders.Find(id);
             if (order != null)
-                _orders.Remove(order);
+            {
+                _context.Orders.Remove(order);
+                _context.SaveChanges();
+            }
         }
     }
 }
