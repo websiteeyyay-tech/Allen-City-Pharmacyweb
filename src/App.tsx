@@ -1,16 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Routes, Route } from "react-router-dom";
-import LoginPage from "./pages/LoginPage"; // 👈 Add this line
 
-// Components
-import Navbar from "./components/Navbar";
-import PromoBar from "./components/PromoBar";
-import Footer from "./components/Footer";
-import CartPanel from "./components/CartPanel";
-import ChatBot from "./components/ChatBot";
-import BackendStatus from "./components/BackendStatus";
-
-// Pages
+// 🧭 Pages (Public)
+import LoginPage from "./pages/LoginPage";
 import HomePage from "./pages/HomePage";
 import ShopPage from "./pages/ShopPage";
 import OrderPage from "./pages/OrderPage";
@@ -20,6 +12,23 @@ import ContactPage from "./pages/ContactPage";
 import ServicesPage from "./pages/ServicesPage";
 import StoreLocatorPage from "./pages/StoreLocatorPage";
 import AboutPage from "./pages/AboutPage";
+
+// 🧑‍💼 Admin Pages
+import Dashboard from "./admin/Dashboard";
+import Inventory from "./admin/Inventory";
+import Orders from "./admin/Orders";
+import Products from "./admin/Products";
+import Reports from "./admin/Reports";
+import Settings from "./admin/Settings";
+import Users from "./admin/Users";
+
+// 🧩 Components
+import Navbar from "./components/Navbar";
+import PromoBar from "./components/PromoBar";
+import Footer from "./components/Footer";
+import CartPanel from "./components/CartPanel";
+import ChatBot from "./components/ChatBot";
+import BackendStatus from "./components/BackendStatus";
 
 function App() {
   // 🛒 CART STATE
@@ -51,7 +60,6 @@ function App() {
       const stored = localStorage.getItem("cart");
       setCart(stored ? JSON.parse(stored) : []);
     };
-
     window.addEventListener("storage", syncCart);
     return () => window.removeEventListener("storage", syncCart);
   }, []);
@@ -139,12 +147,9 @@ function App() {
 
       <main className="flex-1">
         <Routes>
-          {/* 🏠 Home page (no cart logic) */}
+          {/* 🌐 Public Site Routes */}
           <Route path="/" element={<HomePage />} />
-
-          {/* 🛍️ Shop page (can add to cart) */}
           <Route path="/shop" element={<ShopPage onAdd={addToCart} />} />
-
           <Route path="/order" element={<OrderPage />} />
           <Route
             path="/checkout"
@@ -164,8 +169,16 @@ function App() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/login" element={<LoginPage />} />
 
+          {/* 🧑‍💼 Admin Routes */}
+          <Route path="/admin/dashboard" element={<Dashboard />} />
+          <Route path="/admin/inventory" element={<Inventory />} />
+          <Route path="/admin/orders" element={<Orders />} />
+          <Route path="/admin/products" element={<Products />} />
+          <Route path="/admin/reports" element={<Reports />} />
+          <Route path="/admin/settings" element={<Settings />} />
+          <Route path="/admin/users" element={<Users />} />
 
-          {/* Fallback route → HomePage (no cart) */}
+          {/* Fallback route → HomePage */}
           <Route path="*" element={<HomePage />} />
         </Routes>
       </main>
