@@ -15,11 +15,7 @@
     "@fortawesome/free-brands-svg-icons": "^7.1.0",
     "@fortawesome/free-solid-svg-icons": "^7.1.0",
     "@fortawesome/react-fontawesome": "^3.1.0",
-<<<<<<< HEAD
-=======
-    "@types/recharts": "^2.0.1",
     "axios": "^1.12.2",
->>>>>>> ed28971dde2fe905358d6e411f56d17520876cd7
     "framer-motion": "^12.23.22",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.545.0",

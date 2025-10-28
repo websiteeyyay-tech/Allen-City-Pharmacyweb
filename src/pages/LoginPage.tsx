@@ -2,28 +2,89 @@ import React, { useState, useEffect } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
 import { motion } from "framer-motion";
+import axios from "axios";
 
+// ✅ AXIOS INSTANCE (Backend setup)
+const api = axios.create({
+  baseURL: "http://127.0.0.1:5272/api", // 👈 matches your Swagger port
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// ✅ Log all requests & responses
+api.interceptors.request.use((request) => {
+  console.log("🟢 Sending Request:", request.method?.toUpperCase(), request.url, request.data);
+  return request;
+});
+
+api.interceptors.response.use(
+  (response) => {
+    console.log("✅ Response:", response.status, response.data);
+    return response;
+  },
+  (error) => {
+    if (error.response) {
+      console.error("❌ API Error:", error.response.status, error.response.data);
+    } else {
+      console.error("🚫 Network Error:", error.message);
+    }
+    return Promise.reject(error);
+  }
+);
+
+// ✅ LOGIN PAGE COMPONENT
 const LoginPage: React.FC = () => {
-  const [step, setStep] = useState<"login" | "verify">("login");
+  const [step, setStep] = useState<"login" | "verify" | "signup">("login");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [timer, setTimer] = useState(60);
   const [isResendAvailable, setIsResendAvailable] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // Handle login
-  const handleLogin = (e: React.FormEvent) => {
+  // ---- LOGIN ----
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username && password) {
-      setTimeout(() => {
-        setStep("verify");
-        setTimer(60);
-        setIsResendAvailable(false);
-      }, 800);
+    try {
+      setLoading(true);
+      const response = await api.post("/Auth/login", { username, passwordHash: password });
+      alert("✅ Login successful!");
+      window.location.href = "/";
+    } catch (error: any) {
+      alert("❌ Login failed: " + (error.response?.data?.message || error.message));
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Handle OTP verify
+  // ---- SIGN UP ----
+  const handleSignup = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (password !== confirmPassword) {
+    alert("❌ Passwords do not match!");
+    return;
+  }
+  try {
+    setLoading(true);
+    const response = await api.post("/Auth/register", {
+      username,
+      passwordHash: password, // ✅ matches backend
+      role: email, // or assign a fixed role, e.g. "customer"
+    });
+    alert("✅ Account created successfully! You can now log in.");
+    setStep("login");
+  } catch (error: any) {
+    alert("❌ Signup failed: " + (error.response?.data?.message || error.message));
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+  // ---- VERIFY OTP ----
   const handleVerify = (e: React.FormEvent) => {
     e.preventDefault();
     if (otp === "123456") {
@@ -34,7 +95,7 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  // Countdown timer
+  // ---- TIMER ----
   useEffect(() => {
     if (step === "verify" && timer > 0) {
       const countdown = setInterval(() => setTimer((t) => t - 1), 1000);
@@ -53,59 +114,43 @@ const LoginPage: React.FC = () => {
   return (
     <div
       className="relative min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat overflow-hidden"
-      style={{
-        backgroundImage: `url('/src/assets/AllanCityPharmacyLogo.png')`,
-      }}
+      style={{ backgroundImage: `url('/src/assets/AllanCityPharmacyLogo.png')` }}
     >
-      {/* Gradient overlay with soft blur */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#004d40]/90 via-[#00695c]/70 to-[#ff9800]/70 backdrop-blur-3xl"></div>
-
-      {/* Decorative glowing orbs */}
       <div className="absolute w-96 h-96 bg-[#43a047]/30 blur-[150px] rounded-full top-[-100px] left-[-100px] animate-pulse"></div>
       <div className="absolute w-80 h-80 bg-[#ff9800]/20 blur-[120px] rounded-full bottom-[-100px] right-[-100px] animate-pulse delay-700"></div>
 
-      {/* Card Container */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.9, ease: "easeOut" }}
         className="relative z-10 flex flex-col md:flex-row w-full max-w-6xl shadow-[0_8px_40px_rgba(0,0,0,0.3)] rounded-3xl overflow-hidden bg-white/15 border border-white/20 backdrop-blur-2xl"
       >
-        {/* Left Side */}
-        <div className="hidden md:flex w-1/2 flex-col items-center justify-center text-white p-12 relative overflow-hidden">
+        {/* LEFT SIDE */}
+        <div className="hidden md:flex w-1/2 flex-col items-center justify-center text-white p-12 relative">
           <motion.img
             src="/src/assets/AllanCityPharmacyLogo.png"
             alt="Allen City Pharmacy"
             className="w-44 mb-6 drop-shadow-2xl"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
           />
-          <motion.h1
-            className="text-5xl font-extrabold mb-4 text-center tracking-tight drop-shadow-lg"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-          >
-            Allen City Pharmacy
-          </motion.h1>
-          <p className="text-white/85 text-lg leading-relaxed text-center max-w-md">
-            Secure access for healthcare professionals and patients. Manage
-            prescriptions, track orders, and connect with our team seamlessly.
+          <h1 className="text-5xl font-extrabold mb-4 text-center">Allen City Pharmacy</h1>
+          <p className="text-white/85 text-lg text-center max-w-md">
+            Secure access for healthcare professionals and patients.
           </p>
           <div className="absolute bottom-6 text-xs text-white/70">
             © 2025 Allen City Pharmacy
           </div>
         </div>
 
-        {/* Right Side */}
+        {/* RIGHT SIDE */}
         <motion.div
           initial={{ opacity: 0, y: 25 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
           className="flex w-full md:w-1/2 items-center justify-center p-10 bg-white/95 backdrop-blur-xl"
         >
-          <div className="w-full max-w-md bg-white shadow-2xl rounded-3xl p-10 border border-gray-100 relative overflow-hidden">
+          <div className="w-full max-w-md bg-white shadow-2xl rounded-3xl p-10 border border-gray-100 relative">
+            {/* LOGIN FORM */}
             {step === "login" && (
               <>
                 <h2 className="text-4xl font-extrabold text-[#004d40] mb-2 text-center">
@@ -115,43 +160,17 @@ const LoginPage: React.FC = () => {
                   Sign in to continue your journey
                 </p>
 
-                {/* Social Login Buttons */}
-                <div className="flex flex-col gap-4 mb-8">
-                  <button className="flex items-center justify-center gap-3 border border-gray-200 rounded-xl py-3 hover:shadow-md hover:bg-gray-50 transition-all duration-300">
-                    <FcGoogle size={22} />
-                    <span className="text-gray-700 font-semibold">
-                      Continue with Google
-                    </span>
-                  </button>
-                  <button className="flex items-center justify-center gap-3 border border-gray-200 rounded-xl py-3 hover:bg-blue-50 hover:shadow-md transition-all duration-300">
-                    <FaFacebook size={22} color="#1877F2" />
-                    <span className="text-gray-700 font-semibold">
-                      Continue with Facebook
-                    </span>
-                  </button>
-                </div>
-
-                <div className="flex items-center mb-8">
-                  <div className="flex-grow border-t border-gray-300" />
-                  <span className="mx-3 text-sm text-gray-500">or</span>
-                  <div className="flex-grow border-t border-gray-300" />
-                </div>
-
                 <form onSubmit={handleLogin} className="space-y-6">
                   <div className="relative">
                     <input
                       type="text"
-                      id="username"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      className="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-xl placeholder-transparent focus:outline-none focus:ring-2 focus:ring-[#43a047] focus:border-transparent transition-all duration-300"
+                      className="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#43a047]"
                       placeholder="Username"
                       required
                     />
-                    <label
-                      htmlFor="username"
-                      className="absolute left-3 top-2.5 text-gray-500 text-sm transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-base peer-focus:top-2.5 peer-focus:text-sm peer-focus:text-[#43a047]"
-                    >
+                    <label className="absolute left-3 top-2.5 text-sm text-gray-500">
                       Username
                     </label>
                   </div>
@@ -159,106 +178,160 @@ const LoginPage: React.FC = () => {
                   <div className="relative">
                     <input
                       type="password"
-                      id="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-xl placeholder-transparent focus:outline-none focus:ring-2 focus:ring-[#ff9800] focus:border-transparent transition-all duration-300"
+                      className="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#ff9800]"
                       placeholder="Password"
                       required
                     />
-                    <label
-                      htmlFor="password"
-                      className="absolute left-3 top-2.5 text-gray-500 text-sm transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-base peer-focus:top-2.5 peer-focus:text-sm peer-focus:text-[#ff9800]"
-                    >
+                    <label className="absolute left-3 top-2.5 text-sm text-gray-500">
                       Password
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between text-sm">
-                    <label className="flex items-center gap-2 text-gray-600">
-                      <input type="checkbox" className="accent-[#43a047]" />
-                      <span>Remember me</span>
-                    </label>
-                    <a
-                      href="#"
-                      className="text-[#ff9800] hover:text-[#f57c00] font-medium transition-all"
-                    >
-                      Forgot password?
-                    </a>
-                  </div>
-
                   <button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-[#43a047] to-[#ff9800] text-white py-3 rounded-xl font-semibold tracking-wide shadow-lg hover:shadow-xl hover:scale-[1.02] transition-transform duration-300"
+                    disabled={loading}
+                    className="w-full bg-gradient-to-r from-[#43a047] to-[#ff9800] text-white py-3 rounded-xl font-semibold hover:scale-[1.02] transition"
                   >
-                    Sign In
+                    {loading ? "Signing In..." : "Sign In"}
                   </button>
+
+                  <p className="text-center text-gray-600 mt-4">
+                    Don’t have an account?{" "}
+                    <button
+                      type="button"
+                      onClick={() => setStep("signup")}
+                      className="text-[#ff9800] hover:text-[#f57c00] font-semibold"
+                    >
+                      Sign Up
+                    </button>
+                  </p>
                 </form>
               </>
             )}
 
-            {/* OTP Verification */}
-            {step === "verify" && (
-              <div>
-                <h2 className="text-3xl font-bold text-[#004d40] mb-2 text-center">
-                  Verify Your Identity
+            {/* SIGNUP FORM */}
+            {step === "signup" && (
+              <>
+                <h2 className="text-4xl font-extrabold text-[#004d40] mb-2 text-center">
+                  Create Account
                 </h2>
-                <p className="text-gray-600 text-center mb-6">
-                  Enter the 6-digit code sent to your email or phone
+                <p className="text-gray-600 text-center mb-8">
+                  Join Allen City Pharmacy today
                 </p>
 
-                <form onSubmit={handleVerify} className="space-y-6">
-                  <div className="flex justify-center space-x-2">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <input
-                        key={i}
-                        type="text"
-                        maxLength={1}
-                        value={otp[i] || ""}
-                        onChange={(e) => {
-                          const newOtp =
-                            otp.substring(0, i) +
-                            e.target.value +
-                            otp.substring(i + 1);
-                          setOtp(newOtp);
-                        }}
-                        className="w-11 h-12 text-center border border-gray-300 rounded-md text-lg font-medium focus:outline-none focus:ring-2 focus:ring-[#ff9800] transition"
-                      />
-                    ))}
-                  </div>
+                <form onSubmit={handleSignup} className="space-y-6">
+                  <input
+                    type="text"
+                    placeholder="Username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full border border-gray-300 rounded-xl px-3 py-3 focus:ring-2 focus:ring-[#43a047]"
+                    required
+                  />
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full border border-gray-300 rounded-xl px-3 py-3 focus:ring-2 focus:ring-[#43a047]"
+                    required
+                  />
+                  <input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full border border-gray-300 rounded-xl px-3 py-3 focus:ring-2 focus:ring-[#ff9800]"
+                    required
+                  />
+                  <input
+                    type="password"
+                    placeholder="Confirm Password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full border border-gray-300 rounded-xl px-3 py-3 focus:ring-2 focus:ring-[#ff9800]"
+                    required
+                  />
 
                   <button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-[#43a047] to-[#ff9800] text-white py-3 rounded-xl font-semibold hover:opacity-95 transition duration-300 shadow-lg"
+                    disabled={loading}
+                    className="w-full bg-gradient-to-r from-[#43a047] to-[#ff9800] text-white py-3 rounded-xl font-semibold hover:scale-[1.02] transition"
                   >
-                    Verify Code
+                    {loading ? "Creating..." : "Sign Up"}
                   </button>
 
-                  <div className="text-center text-sm text-gray-600 mt-4">
-                    {isResendAvailable ? (
-                      <button
-                        type="button"
-                        onClick={resendOtp}
-                        className="text-[#ff9800] hover:text-[#f57c00] font-medium"
-                      >
-                        Resend Code
-                      </button>
-                    ) : (
-                      <p>
-                        Resend available in{" "}
-                        <span className="font-medium text-[#004d40]">
-                          {timer}s
-                        </span>
-                      </p>
-                    )}
-                  </div>
+                  <p className="text-center text-gray-600 mt-4">
+                    Already have an account?{" "}
+                    <button
+                      type="button"
+                      onClick={() => setStep("login")}
+                      className="text-[#43a047] hover:text-[#2e7d32] font-semibold"
+                    >
+                      Sign In
+                    </button>
+                  </p>
                 </form>
-              </div>
+              </>
             )}
 
-            <p className="text-xs text-gray-400 mt-8 text-center md:hidden">
-              © 2025 Allen City Pharmacy
-            </p>
+            {/* VERIFY FORM */}
+            {step === "verify" && (
+              <form onSubmit={handleVerify} className="space-y-6">
+                <h2 className="text-3xl font-bold text-[#004d40] text-center">
+                  Verify Your Identity
+                </h2>
+                <p className="text-gray-600 text-center mb-6">
+                  Enter the 6-digit code sent to your email
+                </p>
+                <div className="flex justify-center space-x-2">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <input
+                      key={i}
+                      type="text"
+                      maxLength={1}
+                      value={otp[i] || ""}
+                      onChange={(e) => {
+                        const newOtp =
+                          otp.substring(0, i) +
+                          e.target.value +
+                          otp.substring(i + 1);
+                        setOtp(newOtp);
+                      }}
+                      className="w-11 h-12 text-center border border-gray-300 rounded-md text-lg font-medium focus:ring-2 focus:ring-[#ff9800]"
+                    />
+                  ))}
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-[#43a047] to-[#ff9800] text-white py-3 rounded-xl font-semibold"
+                >
+                  Verify Code
+                </button>
+
+                <div className="text-center text-sm text-gray-600 mt-4">
+                  {isResendAvailable ? (
+                    <button
+                      type="button"
+                      onClick={resendOtp}
+                      className="text-[#ff9800] hover:text-[#f57c00] font-medium"
+                    >
+                      Resend Code
+                    </button>
+                  ) : (
+                    <p>
+                      Resend available in{" "}
+                      <span className="font-medium text-[#004d40]">
+                        {timer}s
+                      </span>
+                    </p>
+                  )}
+                </div>
+              </form>
+            )}
           </div>
         </motion.div>
       </motion.div>

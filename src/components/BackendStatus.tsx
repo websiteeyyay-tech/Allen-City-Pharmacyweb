@@ -1,33 +1,39 @@
 import React, { useEffect, useState } from "react";
 
-// ✅ Auto-detect backend URL (works for both GitHub Codespaces and local dev)
 const API_URL = (() => {
   const host = window.location.hostname;
 
   if (host.includes(".app.github.dev")) {
-    // Automatically switch frontend port (5173) → backend port (5272)
-    return `https://${host.replace("5173", "5272")}`;
+    // For GitHub Codespaces (auto switch ports)
+    return `https://${host.replace("5173", "5272")}/api`;
   }
 
-  // Local dev fallback
-  return "http://localhost:5272";
+  // Local fallback (match Swagger)
+  return "http://127.0.0.1:5272/api";
 })();
 
 const BackendStatus: React.FC = () => {
-  const [status, setStatus] = useState<"checking" | "connected" | "failed">("checking");
+  const [status, setStatus] = useState<
+    "checking" | "connected" | "failed"
+  >("checking");
 
   useEffect(() => {
     const checkBackend = async () => {
+      const testUrl = `${API_URL}/Products`; // ✅ Match Swagger route exactly
+      console.log("🔍 Checking backend at:", testUrl);
+
       try {
-        console.log("Checking backend at:", `${API_URL}/api/products`);
-        const response = await fetch(`${API_URL}/api/products`);
+        const response = await fetch(testUrl);
+
         if (response.ok) {
+          console.log("✅ Backend reachable!");
           setStatus("connected");
         } else {
+          console.warn("⚠️ Backend responded, but not OK:", response.status);
           setStatus("failed");
         }
       } catch (err) {
-        console.error("Error connecting to backend:", err);
+        console.error("❌ Error connecting to backend:", err);
         setStatus("failed");
       }
     };
