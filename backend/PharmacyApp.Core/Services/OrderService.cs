@@ -1,27 +1,43 @@
 using PharmacyApp.Core.Entities;
 using PharmacyApp.Core.Interfaces;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace PharmacyApp.Core.Services
 {
     public class OrderService : IOrderService
     {
-        private readonly List<Order> _orders = new();
+        private readonly IOrderRepository _orderRepository;
 
-        public IEnumerable<Order> GetAllOrders() => _orders;
-
-        public Order? GetOrderById(int id) => _orders.FirstOrDefault(o => o.Id == id);
-
-        public void CreateOrder(Order order)
+        public OrderService(IOrderRepository orderRepository)
         {
-            order.Id = _orders.Count + 1;
-            _orders.Add(order);
+            _orderRepository = orderRepository;
         }
 
-        public void DeleteOrder(int id)
+        public async Task<IEnumerable<Order>> GetAllOrdersAsync()
         {
-            var order = _orders.FirstOrDefault(o => o.Id == id);
+            return await _orderRepository.GetAllAsync();
+        }
+
+        public async Task<Order?> GetOrderByIdAsync(int id)
+        {
+            return await _orderRepository.GetByIdAsync(id);
+        }
+
+        public async Task CreateOrderAsync(Order order)
+        {
+            await _orderRepository.AddAsync(order);
+            await _orderRepository.SaveChangesAsync();
+        }
+
+        public async Task DeleteOrderAsync(int id)
+        {
+            var order = await _orderRepository.GetByIdAsync(id);
             if (order != null)
-                _orders.Remove(order);
+            {
+                await _orderRepository.DeleteAsync(order);
+                await _orderRepository.SaveChangesAsync();
+            }
         }
     }
 }

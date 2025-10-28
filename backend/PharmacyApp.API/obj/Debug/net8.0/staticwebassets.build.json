@@ -1,11 +1,1 @@
-{
-  "Version": 1,
-  "Hash": "toljp4iVcotZrH5k83hmU5FVUsAAvPLNMhl7+LpfN48=",
-  "Source": "PharmacyApp.API",
-  "BasePath": "_content/PharmacyApp.API",
-  "Mode": "Default",
-  "ManifestType": "Build",
-  "ReferencedProjectsConfiguration": [],
-  "DiscoveryPatterns": [],
-  "Assets": []
-}
+{"Version":1,"Hash":"cWnYYmO1BOsEIXtiWMJ9SL3vid29CJ3cND+gd+QT52c=","Source":"PharmacyApp.API","BasePath":"_content/PharmacyApp.API","Mode":"Default","ManifestType":"Build","ReferencedProjectsConfiguration":[],"DiscoveryPatterns":[],"Assets":[],"Endpoints":[]}

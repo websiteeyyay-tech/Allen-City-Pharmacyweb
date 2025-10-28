@@ -9,34 +9,53 @@ namespace PharmacyApp.API.Controllers
     public class OrdersController : ControllerBase
     {
         private readonly IOrderService _orderService;
+        private readonly IProductService _productService;
 
-        public OrdersController(IOrderService orderService)
+        public OrdersController(IOrderService orderService, IProductService productService)
         {
             _orderService = orderService;
+            _productService = productService;
         }
 
         [HttpGet]
-        public IActionResult GetOrders() => Ok(_orderService.GetAllOrders());
+        public async Task<IActionResult> GetOrders()
+        {
+            var orders = await _orderService.GetAllOrdersAsync();
+            return Ok(orders);
+        }
 
         [HttpGet("{id}")]
-        public IActionResult GetOrderById(int id)
+        public async Task<IActionResult> GetOrderById(int id)
         {
-            var order = _orderService.GetOrderById(id);
+            var order = await _orderService.GetOrderByIdAsync(id);
             if (order == null) return NotFound();
             return Ok(order);
         }
 
         [HttpPost]
-        public IActionResult CreateOrder(Order order)
+        public async Task<IActionResult> CreateOrder([FromBody] Order order)
         {
-            _orderService.CreateOrder(order);
-            return Ok(order);
+            var product = await _productService.GetByIdAsync(order.ProductId);
+            if (product == null)
+                return BadRequest(new { message = "Product not found" });
+
+            order.TotalPrice = order.Quantity * product.Price;
+            order.OrderDate = DateTime.UtcNow;
+            order.Status = "Pending";
+
+            await _orderService.CreateOrderAsync(order);
+
+            return Ok(new
+            {
+                message = "Order placed successfully!",
+                order
+            });
         }
 
         [HttpDelete("{id}")]
-        public IActionResult DeleteOrder(int id)
+        public async Task<IActionResult> DeleteOrder(int id)
         {
-            _orderService.DeleteOrder(id);
+            await _orderService.DeleteOrderAsync(id);
             return NoContent();
         }
     }

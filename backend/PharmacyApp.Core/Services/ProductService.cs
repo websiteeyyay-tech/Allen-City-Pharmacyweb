@@ -1,44 +1,62 @@
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using PharmacyApp.Core.Entities;
+﻿using PharmacyApp.Core.Entities;
 using PharmacyApp.Core.Interfaces;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
-namespace PharmacyApp.Core.Services;
-
-public class ProductService : IProductService
+namespace PharmacyApp.Core.Services
 {
-    private static readonly ConcurrentDictionary<int, Product> _store = new();
-    private static int _nextId = 1;
-
-    public Task<IEnumerable<Product>> GetAllAsync()
+    public class ProductService : IProductService
     {
-        return Task.FromResult<IEnumerable<Product>>(_store.Values.ToList());
-    }
+        private readonly IProductRepository _repository;
 
-    public Task<Product?> GetByIdAsync(int id)
-    {
-        _store.TryGetValue(id, out var p);
-        return Task.FromResult<Product?>(p);
-    }
+        public ProductService(IProductRepository repository)
+        {
+            _repository = repository;
+        }
 
-    public Task<Product> CreateAsync(Product product)
-    {
-        product.Id = System.Threading.Interlocked.Increment(ref _nextId);
-        _store[product.Id] = product;
-        return Task.FromResult(product);
-    }
+        public async Task<IEnumerable<Product>> GetAllAsync()
+        {
+            return await _repository.GetAllAsync();
+        }
 
-    public Task UpdateAsync(Product product)
-    {
-        _store[product.Id] = product;
-        return Task.CompletedTask;
-    }
+        public async Task<Product?> GetByIdAsync(int id)
+        {
+            return await _repository.GetByIdAsync(id);
+        }
 
-    public Task DeleteAsync(int id)
-    {
-        _store.TryRemove(id, out _);
-        return Task.CompletedTask;
+        public async Task<Product> CreateAsync(Product product)
+        {
+            await _repository.AddAsync(product);
+            await _repository.SaveChangesAsync();
+            return product;
+        }
+
+        public async Task UpdateAsync(Product product)
+        {
+            var existing = await _repository.GetByIdAsync(product.Id);
+            if (existing == null)
+                throw new KeyNotFoundException($"Product with ID {product.Id} not found.");
+
+            // Update only fields that should change
+            existing.Name = product.Name;
+            existing.SKU = product.SKU;
+            existing.Description = product.Description;
+            existing.Price = product.Price;
+            existing.StockQuantity = product.StockQuantity;
+            existing.UpdatedAt = DateTime.UtcNow;
+
+            await _repository.UpdateAsync(existing);
+            await _repository.SaveChangesAsync();
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            var product = await _repository.GetByIdAsync(id);
+            if (product == null)
+                throw new KeyNotFoundException($"Product with ID {id} not found.");
+
+            await _repository.DeleteAsync(product);
+            await _repository.SaveChangesAsync();
+        }
     }
 }

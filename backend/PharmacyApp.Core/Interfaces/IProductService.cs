@@ -1,6 +1,6 @@
+﻿using PharmacyApp.Core.Entities;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using PharmacyApp.Core.Entities;
 
 namespace PharmacyApp.Core.Interfaces
 {
@@ -8,7 +8,7 @@ namespace PharmacyApp.Core.Interfaces
     {
         Task<IEnumerable<Product>> GetAllAsync();
         Task<Product?> GetByIdAsync(int id);
-        Task<Product> CreateAsync(Product product);
+        Task<Product> CreateAsync(Product product); // ✅ returns Product
         Task UpdateAsync(Product product);
         Task DeleteAsync(int id);
     }

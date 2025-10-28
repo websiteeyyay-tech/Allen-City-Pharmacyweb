@@ -36,10 +36,10 @@ namespace PharmacyApp.Infrastructure.Repositories
 
         public async Task DeleteAsync(int id)
         {
-            var entity = await GetByIdAsync(id);
+            var entity = await _context.Set<T>().FindAsync(id);
             if (entity != null)
             {
-                _dbSet.Remove(entity);
+                _context.Set<T>().Remove(entity);
                 await _context.SaveChangesAsync();
             }
         }
