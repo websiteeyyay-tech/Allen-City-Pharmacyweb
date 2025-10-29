@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -20,7 +20,7 @@ interface ShopPageProps {
   onAdd: (product: Product) => void;
 }
 
-const products: Product[] = [
+const localProducts: Product[] = [
   {
     id: 1,
     name: "Pain Relief Tablets - 20 pack",
@@ -120,10 +120,37 @@ export default function ShopPage({ onAdd }: ShopPageProps) {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [sortBy, setSortBy] = useState("featured");
+  const [apiProducts, setApiProducts] = useState<Product[]>([]);
   const navigate = useNavigate();
 
+  // ✅ Fetch from backend (merge with static)
+  useEffect(() => {
+    fetch("http://localhost:5272/api/Products")
+      .then((res) => res.json())
+      .then((data) => {
+        const formatted = data.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          price: p.price,
+          oldPrice: undefined,
+          rating: 4.5,
+          reviews: 0,
+          category: "Medicine",
+          image:
+            "https://images.unsplash.com/photo-1582719478171-2f9b6d2b9e8f?auto=format&fit=crop&w=600&q=60",
+          description: p.description || "No description available.",
+          stock: p.stockQuantity > 0 ? "In stock" : "Out of stock",
+        }));
+        setApiProducts(formatted);
+      })
+      .catch((err) => console.error("❌ Error fetching products:", err));
+  }, []);
+
+  // Combine backend + local products
+  const combinedProducts = [...apiProducts, ...localProducts];
+
   const filteredProducts = useMemo(() => {
-    let filtered = products.filter(
+    let filtered = combinedProducts.filter(
       (p) =>
         (category === "All" || p.category === category) &&
         p.name.toLowerCase().includes(search.toLowerCase())
@@ -140,7 +167,7 @@ export default function ShopPage({ onAdd }: ShopPageProps) {
         break;
     }
     return filtered;
-  }, [category, search, sortBy]);
+  }, [category, search, sortBy, combinedProducts]);
 
   return (
     <div className="min-h-screen bg-white text-gray-800 font-[Segoe_UI]">
@@ -216,7 +243,7 @@ export default function ShopPage({ onAdd }: ShopPageProps) {
         </div>
       </div>
 
-      {/* Product Grid (no background) */}
+      {/* Product Grid */}
       <main id="products" className="max-w-6xl w-[80%] mx-auto mt-12 mb-20">
         {filteredProducts.length === 0 ? (
           <p className="text-center text-gray-600 mt-12 text-lg">
@@ -279,7 +306,6 @@ export default function ShopPage({ onAdd }: ShopPageProps) {
                   </div>
                 </div>
 
-                {/* Quick View overlay */}
                 <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
                   <span className="bg-white text-green-800 px-4 py-2 rounded-full font-semibold shadow-md">
                     Quick View
