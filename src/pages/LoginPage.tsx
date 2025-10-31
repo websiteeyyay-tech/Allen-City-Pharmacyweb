@@ -1,104 +1,182 @@
 import React, { useState, useEffect } from "react";
-import { FcGoogle } from "react-icons/fc";
-import { FaFacebook } from "react-icons/fa";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import axios from "axios";
+import "./LoginPage.css"; // 👈 create this file for subtle input/hover effects
 
+// ✅ AXIOS INSTANCE
+const api = axios.create({
+  baseURL: "http://127.0.0.1:5272/api",
+  headers: { "Content-Type": "application/json" },
+});
+
+api.interceptors.request.use((req) => {
+  console.log("🟢 Request:", req.method?.toUpperCase(), req.url, req.data);
+  return req;
+});
+api.interceptors.response.use(
+  (res) => {
+    console.log("✅ Response:", res.status, res.data);
+    return res;
+  },
+  (err) => {
+    console.error("❌ API Error:", err.response?.status, err.response?.data);
+    return Promise.reject(err);
+  }
+);
+
+// ✅ Toast Component
+const Toast: React.FC<{
+  message: string;
+  type?: "success" | "error" | "info";
+  onClose: () => void;
+}> = ({ message, type = "info", onClose }) => {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 3000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  const styles = {
+    success: { bg: "bg-green-50/95", border: "border-green-400", text: "text-green-700", icon: "✅" },
+    error: { bg: "bg-red-50/95", border: "border-red-400", text: "text-red-700", icon: "❌" },
+    info: { bg: "bg-blue-50/95", border: "border-blue-400", text: "text-blue-700", icon: "ℹ️" },
+  };
+  const style = styles[type];
+
+  return (
+    <AnimatePresence>
+      {message && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="fixed inset-0 z-50 flex items-center justify-center"
+        >
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+          <motion.div
+            initial={{ y: 40, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 40, opacity: 0 }}
+            transition={{ duration: 0.4, ease: "easeInOut" }}
+            className={`relative z-10 w-[90%] md:w-[23%] ${style.bg} border ${style.border} 
+              rounded-2xl shadow-2xl p-8 flex flex-col items-center text-center`}
+          >
+            <div className="text-5xl mb-3">{style.icon}</div>
+            <p className={`text-lg font-semibold ${style.text}`}>{message}</p>
+            <button
+              onClick={onClose}
+              className="mt-6 px-6 py-2 bg-white/80 rounded-xl shadow-md text-gray-700 hover:bg-white"
+            >
+              OK
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+// ✅ MAIN COMPONENT
 const LoginPage: React.FC = () => {
-  const [step, setStep] = useState<"login" | "verify">("login");
+  const [step, setStep] = useState<"login" | "signup">("login");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [otp, setOtp] = useState("");
-  const [timer, setTimer] = useState(60);
-  const [isResendAvailable, setIsResendAvailable] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState("customer");
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
 
-  // Handle login
-  const handleLogin = (e: React.FormEvent) => {
+  // ---- LOGIN ----
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username && password) {
-      setTimeout(() => {
-        setStep("verify");
-        setTimer(60);
-        setIsResendAvailable(false);
-      }, 800);
+    try {
+      setLoading(true);
+      const response = await api.post("/Auth/login", { username, passwordHash: password });
+      const user = response.data.user || response.data;
+      const loggedUser = { id: user.id, username: user.username, role: user.role?.toLowerCase() || "user" };
+      localStorage.setItem("user", JSON.stringify(loggedUser));
+      setToast({ message: `Welcome back, ${loggedUser.username}!`, type: "success" });
+      setTimeout(() => (window.location.href = loggedUser.role === "admin" ? "/admin/dashboard" : "/"), 1200);
+    } catch (error: any) {
+      setToast({ message: "Login failed: " + (error.response?.data?.message || error.message), type: "error" });
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Handle OTP verify
-  const handleVerify = (e: React.FormEvent) => {
+  // ---- SIGNUP ----
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (otp === "123456") {
-      alert("✅ Login successful! Redirecting...");
-      window.location.href = "/";
-    } else {
-      alert("❌ Invalid OTP. Try again.");
+    if (password !== confirmPassword) {
+      setToast({ message: "Passwords do not match!", type: "error" });
+      return;
+    }
+    try {
+      setLoading(true);
+      await api.post("/Auth/register", { username, email, passwordHash: password, role });
+      setToast({ message: "Account created successfully! You can now log in.", type: "success" });
+      setStep("login");
+    } catch (error: any) {
+      setToast({ message: "Signup failed: " + (error.response?.data?.message || error.message), type: "error" });
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Countdown timer
-  useEffect(() => {
-    if (step === "verify" && timer > 0) {
-      const countdown = setInterval(() => setTimer((t) => t - 1), 1000);
-      return () => clearInterval(countdown);
-    } else if (timer === 0) {
-      setIsResendAvailable(true);
-    }
-  }, [timer, step]);
-
-  const resendOtp = () => {
-    setTimer(60);
-    setIsResendAvailable(false);
-    setOtp("");
+  // ---- GOOGLE LOGIN ----
+  const handleGoogleLogin = () => {
+    window.location.href = "http://127.0.0.1:5272/api/Auth/google";
   };
 
   return (
     <div
-      className="relative min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat overflow-hidden"
-      style={{
-        backgroundImage: `url('/src/assets/AllanCityPharmacyLogo.png')`,
-      }}
+      className="relative min-h-screen flex items-center justify-center bg-cover bg-center overflow-hidden"
+      style={{ backgroundImage: `url('/src/assets/AllanCityPharmacyLogo.png')` }}
     >
-      {/* Gradient overlay with soft blur */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#004d40]/90 via-[#00695c]/70 to-[#ff9800]/70 backdrop-blur-3xl"></div>
 
-      {/* Decorative glowing orbs */}
-      <div className="absolute w-96 h-96 bg-[#43a047]/30 blur-[150px] rounded-full top-[-100px] left-[-100px] animate-pulse"></div>
-      <div className="absolute w-80 h-80 bg-[#ff9800]/20 blur-[120px] rounded-full bottom-[-100px] right-[-100px] animate-pulse delay-700"></div>
+      {/* ✨ Floating Background Particles */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 2 }} className="absolute inset-0 overflow-hidden">
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full bg-white/10 blur-md"
+            style={{
+              width: Math.random() * 20 + 10,
+              height: Math.random() * 20 + 10,
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              y: [0, 20, 0],
+              opacity: [0.3, 0.8, 0.3],
+              transition: { duration: Math.random() * 5 + 4, repeat: Infinity },
+            }}
+          />
+        ))}
+      </motion.div>
 
-      {/* Card Container */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.9, ease: "easeOut" }}
-        className="relative z-10 flex flex-col md:flex-row w-full max-w-6xl shadow-[0_8px_40px_rgba(0,0,0,0.3)] rounded-3xl overflow-hidden bg-white/15 border border-white/20 backdrop-blur-2xl"
+        transition={{ duration: 0.9 }}
+        className="relative z-10 flex flex-col md:flex-row w-full max-w-6xl shadow-2xl rounded-3xl overflow-hidden bg-white/15 border border-white/20 backdrop-blur-2xl"
       >
-        {/* Left Side */}
-        <div className="hidden md:flex w-1/2 flex-col items-center justify-center text-white p-12 relative overflow-hidden">
+        {/* LEFT SIDE */}
+        <div className="hidden md:flex w-1/2 flex-col items-center justify-center text-white p-12 relative">
           <motion.img
             src="/src/assets/AllanCityPharmacyLogo.png"
             alt="Allen City Pharmacy"
             className="w-44 mb-6 drop-shadow-2xl"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
           />
-          <motion.h1
-            className="text-5xl font-extrabold mb-4 text-center tracking-tight drop-shadow-lg"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-          >
-            Allen City Pharmacy
-          </motion.h1>
-          <p className="text-white/85 text-lg leading-relaxed text-center max-w-md">
-            Secure access for healthcare professionals and patients. Manage
-            prescriptions, track orders, and connect with our team seamlessly.
+          <h1 className="text-5xl font-extrabold mb-4 text-center">Allen City Pharmacy</h1>
+          <p className="text-white/85 text-lg text-center max-w-md">
+            Secure access for healthcare professionals and patients.
           </p>
-          <div className="absolute bottom-6 text-xs text-white/70">
-            © 2025 Allen City Pharmacy
-          </div>
         </div>
 
-        {/* Right Side */}
+        {/* RIGHT SIDE */}
         <motion.div
           initial={{ opacity: 0, y: 25 }}
           animate={{ opacity: 1, y: 0 }}
@@ -106,162 +184,187 @@ const LoginPage: React.FC = () => {
           className="flex w-full md:w-1/2 items-center justify-center p-10 bg-white/95 backdrop-blur-xl"
         >
           <div className="w-full max-w-md bg-white shadow-2xl rounded-3xl p-10 border border-gray-100 relative overflow-hidden">
-            {step === "login" && (
+            {step === "login" ? (
               <>
-                <h2 className="text-4xl font-extrabold text-[#004d40] mb-2 text-center">
+                <motion.h2
+                  initial={{ y: -20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.6 }}
+                  className="text-4xl font-extrabold text-[#004d40] mb-2 text-center drop-shadow-sm"
+                >
                   Welcome Back!
-                </h2>
-                <p className="text-gray-600 text-center mb-8">
-                  Sign in to continue your journey
-                </p>
+                </motion.h2>
+                <p className="text-gray-600 text-center mb-6">Sign in to continue your journey</p>
 
-                {/* Social Login Buttons */}
-                <div className="flex flex-col gap-4 mb-8">
-                  <button className="flex items-center justify-center gap-3 border border-gray-200 rounded-xl py-3 hover:shadow-md hover:bg-gray-50 transition-all duration-300">
-                    <FcGoogle size={22} />
-                    <span className="text-gray-700 font-semibold">
-                      Continue with Google
-                    </span>
-                  </button>
-                  <button className="flex items-center justify-center gap-3 border border-gray-200 rounded-xl py-3 hover:bg-blue-50 hover:shadow-md transition-all duration-300">
-                    <FaFacebook size={22} color="#1877F2" />
-                    <span className="text-gray-700 font-semibold">
-                      Continue with Facebook
-                    </span>
-                  </button>
-                </div>
-
-                <div className="flex items-center mb-8">
-                  <div className="flex-grow border-t border-gray-300" />
-                  <span className="mx-3 text-sm text-gray-500">or</span>
-                  <div className="flex-grow border-t border-gray-300" />
-                </div>
-
-                <form onSubmit={handleLogin} className="space-y-6">
-                  <div className="relative">
-                    <input
-                      type="text"
-                      id="username"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      className="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-xl placeholder-transparent focus:outline-none focus:ring-2 focus:ring-[#43a047] focus:border-transparent transition-all duration-300"
-                      placeholder="Username"
-                      required
-                    />
-                    <label
-                      htmlFor="username"
-                      className="absolute left-3 top-2.5 text-gray-500 text-sm transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-base peer-focus:top-2.5 peer-focus:text-sm peer-focus:text-[#43a047]"
-                    >
-                      Username
-                    </label>
-                  </div>
-
-                  <div className="relative">
-                    <input
-                      type="password"
-                      id="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-xl placeholder-transparent focus:outline-none focus:ring-2 focus:ring-[#ff9800] focus:border-transparent transition-all duration-300"
-                      placeholder="Password"
-                      required
-                    />
-                    <label
-                      htmlFor="password"
-                      className="absolute left-3 top-2.5 text-gray-500 text-sm transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-base peer-focus:top-2.5 peer-focus:text-sm peer-focus:text-[#ff9800]"
-                    >
-                      Password
-                    </label>
-                  </div>
-
-                  <div className="flex items-center justify-between text-sm">
-                    <label className="flex items-center gap-2 text-gray-600">
-                      <input type="checkbox" className="accent-[#43a047]" />
-                      <span>Remember me</span>
-                    </label>
-                    <a
-                      href="#"
-                      className="text-[#ff9800] hover:text-[#f57c00] font-medium transition-all"
-                    >
-                      Forgot password?
-                    </a>
-                  </div>
-
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Username"
+                    className="w-full px-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#43a047]"
+                    required
+                  />
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Password"
+                    className="w-full px-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#ff9800]"
+                    required
+                  />
                   <button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-[#43a047] to-[#ff9800] text-white py-3 rounded-xl font-semibold tracking-wide shadow-lg hover:shadow-xl hover:scale-[1.02] transition-transform duration-300"
+                    disabled={loading}
+                    className="w-full bg-gradient-to-r from-[#43a047] to-[#ff9800] text-white py-3 rounded-xl font-semibold 
+                      relative overflow-hidden group hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
                   >
-                    Sign In
+                    <span>{loading ? "Signing In..." : "Sign In"}</span>
+                    <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent 
+                      translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></span>
                   </button>
                 </form>
+
+                <div className="flex items-center my-4">
+                  <hr className="flex-1 border-gray-300" />
+                  <span className="px-2 text-gray-500">or continue with</span>
+                  <hr className="flex-1 border-gray-300" />
+                </div>
+
+                <div className="flex justify-center gap-4">
+                  <button
+                    onClick={handleGoogleLogin}
+                    className="flex items-center gap-2 border border-gray-300 px-4 py-2 rounded-xl hover:bg-gray-100 transition w-full justify-center"
+                  >
+                    <img src="/src/assets/google-icon.png" alt="Google" className="w-5 h-5" />
+                    Continue with Google
+                  </button>
+                </div>
+
+                <p className="text-center text-gray-600 mt-4">
+                  Don’t have an account?{" "}
+                  <button
+                    type="button"
+                    onClick={() => setStep("signup")}
+                    className="text-[#ff9800] hover:text-[#f57c00] font-semibold"
+                  >
+                    Sign Up
+                  </button>
+                </p>
+
+                {/* ✨ Loader Overlay */}
+                {loading && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="absolute inset-0 flex items-center justify-center bg-white/70 backdrop-blur-md rounded-3xl"
+                  >
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ repeat: Infinity, duration: 1.2, ease: "linear" }}
+                      className="w-10 h-10 border-4 border-[#43a047] border-t-transparent rounded-full"
+                    />
+                  </motion.div>
+                )}
+              </>
+            ) : (
+              <>
+                <motion.h2
+                  initial={{ y: -20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.6 }}
+                  className="text-4xl font-extrabold text-[#004d40] mb-2 text-center drop-shadow-sm"
+                >
+                  Create Account
+                </motion.h2>
+                <p className="text-gray-600 text-center mb-6">Join Allen City Pharmacy today</p>
+
+                <form onSubmit={handleSignup} className="space-y-4">
+                  <input
+                    type="text"
+                    placeholder="Username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full border border-gray-300 rounded-xl px-3 py-3 focus:ring-2 focus:ring-[#43a047]"
+                    required
+                  />
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full border border-gray-300 rounded-xl px-3 py-3 focus:ring-2 focus:ring-[#43a047]"
+                    required
+                  />
+                  <input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full border border-gray-300 rounded-xl px-3 py-3 focus:ring-2 focus:ring-[#ff9800]"
+                    required
+                  />
+                  <input
+                    type="password"
+                    placeholder="Confirm Password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full border border-gray-300 rounded-xl px-3 py-3 focus:ring-2 focus:ring-[#ff9800]"
+                    required
+                  />
+                  <select
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                    className="w-full border border-gray-300 rounded-xl px-3 py-3 focus:ring-2 focus:ring-[#43a047] bg-white"
+                  >
+                    <option value="customer">Customer</option>
+                    <option value="doctor">Doctor</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-gradient-to-r from-[#43a047] to-[#ff9800] text-white py-3 rounded-xl font-semibold 
+                      relative overflow-hidden group hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+                  >
+                    <span>{loading ? "Creating..." : "Sign Up"}</span>
+                    <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent 
+                      translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></span>
+                  </button>
+
+                  <p className="text-center text-gray-600 mt-4">
+                    Already have an account?{" "}
+                    <button
+                      type="button"
+                      onClick={() => setStep("login")}
+                      className="text-[#43a047] hover:text-[#2e7d32] font-semibold"
+                    >
+                      Sign In
+                    </button>
+                  </p>
+                </form>
+
+                {/* ✨ Loader Overlay */}
+                {loading && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="absolute inset-0 flex items-center justify-center bg-white/70 backdrop-blur-md rounded-3xl"
+                  >
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ repeat: Infinity, duration: 1.2, ease: "linear" }}
+                      className="w-10 h-10 border-4 border-[#43a047] border-t-transparent rounded-full"
+                    />
+                  </motion.div>
+                )}
               </>
             )}
-
-            {/* OTP Verification */}
-            {step === "verify" && (
-              <div>
-                <h2 className="text-3xl font-bold text-[#004d40] mb-2 text-center">
-                  Verify Your Identity
-                </h2>
-                <p className="text-gray-600 text-center mb-6">
-                  Enter the 6-digit code sent to your email or phone
-                </p>
-
-                <form onSubmit={handleVerify} className="space-y-6">
-                  <div className="flex justify-center space-x-2">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <input
-                        key={i}
-                        type="text"
-                        maxLength={1}
-                        value={otp[i] || ""}
-                        onChange={(e) => {
-                          const newOtp =
-                            otp.substring(0, i) +
-                            e.target.value +
-                            otp.substring(i + 1);
-                          setOtp(newOtp);
-                        }}
-                        className="w-11 h-12 text-center border border-gray-300 rounded-md text-lg font-medium focus:outline-none focus:ring-2 focus:ring-[#ff9800] transition"
-                      />
-                    ))}
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full bg-gradient-to-r from-[#43a047] to-[#ff9800] text-white py-3 rounded-xl font-semibold hover:opacity-95 transition duration-300 shadow-lg"
-                  >
-                    Verify Code
-                  </button>
-
-                  <div className="text-center text-sm text-gray-600 mt-4">
-                    {isResendAvailable ? (
-                      <button
-                        type="button"
-                        onClick={resendOtp}
-                        className="text-[#ff9800] hover:text-[#f57c00] font-medium"
-                      >
-                        Resend Code
-                      </button>
-                    ) : (
-                      <p>
-                        Resend available in{" "}
-                        <span className="font-medium text-[#004d40]">
-                          {timer}s
-                        </span>
-                      </p>
-                    )}
-                  </div>
-                </form>
-              </div>
-            )}
-
-            <p className="text-xs text-gray-400 mt-8 text-center md:hidden">
-              © 2025 Allen City Pharmacy
-            </p>
           </div>
         </motion.div>
       </motion.div>
+
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 };

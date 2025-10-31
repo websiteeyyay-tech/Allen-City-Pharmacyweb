@@ -12,6 +12,9 @@ import ContactPage from "./pages/ContactPage";
 import ServicesPage from "./pages/ServicesPage";
 import StoreLocatorPage from "./pages/StoreLocatorPage";
 import AboutPage from "./pages/AboutPage";
+import EditProfilePage from "./pages/EditProfilePage";
+import AddressPage from "./pages/AddressPage";
+
 
 // 🧑‍💼 Admin Pages
 import Dashboard from "./admin/Dashboard";
@@ -28,7 +31,6 @@ import PromoBar from "./components/PromoBar";
 import Footer from "./components/Footer";
 import CartPanel from "./components/CartPanel";
 import ChatBot from "./components/ChatBot";
-import BackendStatus from "./components/BackendStatus";
 
 function App() {
   // 🛒 CART STATE
@@ -134,8 +136,6 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* ✅ Backend status indicator */}
-      <BackendStatus />
 
       {/* ✅ Navbar with cart toggle */}
       <Navbar
@@ -168,6 +168,10 @@ function App() {
           <Route path="/store-locator" element={<StoreLocatorPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/edit-profile" element={<EditProfilePage />} />
+          <Route path="/address" element={<AddressPage />} />
+
+
 
           {/* 🧑‍💼 Admin Routes */}
           <Route path="/admin/dashboard" element={<Dashboard />} />
