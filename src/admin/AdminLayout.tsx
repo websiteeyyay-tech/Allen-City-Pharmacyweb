@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   FaChartLine,
   FaBoxes,
@@ -9,12 +9,15 @@ import {
   FaBell,
   FaQuestionCircle,
   FaHome,
+  FaSignOutAlt,
 } from "react-icons/fa";
-import Logo from "<source />/assets/AllanCityPharmacyLogo.png"; // ✅ Correct relative path
+import Logo from "../assets/AllanCityPharmacyLogo.png"; // ✅ correct path
 
 const AdminLayout = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user") || "null");
+  const [openDropdown, setOpenDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // ✅ Protect admin access
   useEffect(() => {
@@ -22,6 +25,22 @@ const AdminLayout = () => {
       navigate("/");
     }
   }, [user, navigate]);
+
+  // ✅ Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpenDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
 
   const menuItems = [
     { name: "Dashboard", icon: <FaHome />, path: "/admin/dashboard" },
@@ -39,7 +58,7 @@ const AdminLayout = () => {
       <aside className="w-64 bg-white border-r border-gray-200 flex flex-col p-4 shadow-sm">
         {/* Brand */}
         <div className="flex items-center mb-6">
-          <img src={Logo} alt="Logo" className="w-8 h-8 mr-2 rounded-md" /> {/* ✅ Uses imported logo */}
+          <img src={Logo} alt="Logo" className="w-8 h-8 mr-2 rounded-md" />
           <h1 className="text-xl font-semibold text-gray-800">Admin Panel</h1>
         </div>
 
@@ -82,29 +101,55 @@ const AdminLayout = () => {
             </span>
           </button>
 
-          {/* Profile */}
-          <div className="flex items-center mt-3 px-3 py-2 bg-gray-100 rounded-lg">
-            <img
-              src="https://i.pravatar.cc/100"
-              alt="Profile"
-              className="w-8 h-8 rounded-full mr-2"
-            />
-            <div>
-              <p className="text-sm font-medium">{user?.username || "Admin"}</p>
-              <p className="text-xs text-gray-500">Administrator</p>
-            </div>
-          </div>
-
           <div className="mt-3 text-center text-xs text-gray-400">
             © 2025 Allen City Pharmacy
           </div>
         </div>
       </aside>
 
-      {/* MAIN CONTENT */}
-      <main className="flex-1 overflow-y-auto p-6">
-        <Outlet />
-      </main>
+      {/* MAIN CONTENT AREA */}
+      <div className="flex-1 flex flex-col">
+        {/* ✅ TOP NAVBAR */}
+        <header className="flex justify-between items-center bg-white border-b border-gray-200 px-6 py-3 shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-700">
+            Welcome, {user?.username || "Admin"}
+          </h2>
+
+          {/* Profile Dropdown */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setOpenDropdown((prev) => !prev)}
+              className="flex items-center focus:outline-none"
+            >
+              <img
+                src="https://i.pravatar.cc/100"
+                alt="Profile"
+                className="w-9 h-9 rounded-full border-2 border-green-500"
+              />
+            </button>
+
+            {openDropdown && (
+              <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
+                <div className="px-4 py-2 text-sm text-gray-700 border-b">
+                  <p className="font-medium">{user?.username || "Admin"}</p>
+                  <p className="text-xs text-gray-500">Administrator</p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  <FaSignOutAlt className="mr-2" /> Logout
+                </button>
+              </div>
+            )}
+          </div>
+        </header>
+
+        {/* MAIN PAGE CONTENT */}
+        <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 };
