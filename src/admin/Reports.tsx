@@ -1,26 +1,74 @@
 // src/pages/admin/Reports.tsx
-import React from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { motion } from "framer-motion";
-import { BarChart3, TrendingUp, TrendingDown, PieChart, FileText } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Pie, PieChart as RePieChart, Cell } from "recharts";
+import {
+  BarChart3,
+  TrendingUp,
+  TrendingDown,
+  PieChart,
+  FileText,
+} from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Pie,
+  PieChart as RePieChart,
+  Cell,
+} from "recharts";
+
+interface SalesData {
+  month: string;
+  sales: number;
+}
+
+interface CategoryData {
+  name: string;
+  value: number;
+  [key: string]: string | number;
+}
 
 const Reports: React.FC = () => {
-  const salesData = [
-    { month: "Jan", sales: 4000 },
-    { month: "Feb", sales: 3000 },
-    { month: "Mar", sales: 5000 },
-    { month: "Apr", sales: 7000 },
-    { month: "May", sales: 6000 },
-    { month: "Jun", sales: 8000 },
-  ];
+  const [salesData, setSalesData] = useState<SalesData[]>([]);
+  const [inventoryData, setInventoryData] = useState<CategoryData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [summary, setSummary] = useState<any>(null);
 
-  const pieData = [
-    { name: "Medicines", value: 55 },
-    { name: "Supplements", value: 25 },
-    { name: "Medical Devices", value: 20 },
-  ];
+  useEffect(() => {
+    const fetchReports = async () => {
+      try {
+        const [salesRes, invRes] = await Promise.all([
+          axios.get("http://127.0.0.1:5272/api/Reports/sales"),
+          axios.get("http://127.0.0.1:5272/api/Reports/inventory"),
+        ]);
+
+        setSalesData(salesRes.data.monthlySales || []);
+        setSummary(salesRes.data.summary || {});
+        setInventoryData(invRes.data.categoryData || []);
+      } catch (error) {
+        console.error("Error loading reports:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReports();
+  }, []);
 
   const COLORS = ["#10B981", "#3B82F6", "#F59E0B"];
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen text-gray-500">
+        Loading reports...
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -32,57 +80,64 @@ const Reports: React.FC = () => {
       >
         <div className="flex items-center space-x-3">
           <BarChart3 className="w-7 h-7 text-orange-500" />
-          <h1 className="text-2xl font-semibold text-gray-800">Reports & Analytics</h1>
+          <h1 className="text-2xl font-semibold text-gray-800">
+            Reports & Analytics
+          </h1>
         </div>
-        <p className="text-gray-400 text-sm">Updated: October 2025</p>
+        <p className="text-gray-400 text-sm">
+          Updated: {new Date().toLocaleDateString()}
+        </p>
       </motion.div>
 
       {/* Summary Cards */}
-      <motion.div
-        className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.1 }}
-      >
-        {[
-          {
-            icon: <TrendingUp className="text-green-500" />,
-            title: "Total Sales",
-            value: "$42,300",
-            change: "+8.2%",
-          },
-          {
-            icon: <TrendingDown className="text-red-500" />,
-            title: "Returns",
-            value: "$1,200",
-            change: "-3.1%",
-          },
-          {
-            icon: <PieChart className="text-blue-500" />,
-            title: "Top Category",
-            value: "Medicines",
-            change: "55%",
-          },
-          {
-            icon: <FileText className="text-purple-500" />,
-            title: "Reports Generated",
-            value: "18",
-            change: "This Month",
-          },
-        ].map((card, i) => (
-          <div
-            key={i}
-            className="bg-white rounded-2xl shadow p-5 flex flex-col space-y-2 hover:shadow-lg transition-shadow"
-          >
+      {summary && (
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+        >
+          <div className="bg-white rounded-2xl shadow p-5 flex flex-col space-y-2">
             <div className="flex items-center justify-between">
-              <h2 className="font-medium text-gray-600">{card.title}</h2>
-              {card.icon}
+              <h2 className="font-medium text-gray-600">Total Sales</h2>
+              <TrendingUp className="text-green-500" />
             </div>
-            <p className="text-2xl font-bold text-gray-800">{card.value}</p>
-            <p className="text-sm text-gray-400">{card.change}</p>
+            <p className="text-2xl font-bold text-gray-800">
+              ₱{summary.totalSales?.toLocaleString() || 0}
+            </p>
           </div>
-        ))}
-      </motion.div>
+
+          <div className="bg-white rounded-2xl shadow p-5 flex flex-col space-y-2">
+            <div className="flex items-center justify-between">
+              <h2 className="font-medium text-gray-600">Returns</h2>
+              <TrendingDown className="text-red-500" />
+            </div>
+            <p className="text-2xl font-bold text-gray-800">
+              {summary.totalReturns || 0}
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow p-5 flex flex-col space-y-2">
+            <div className="flex items-center justify-between">
+              <h2 className="font-medium text-gray-600">Top Category</h2>
+              <PieChart className="text-blue-500" />
+            </div>
+            <p className="text-2xl font-bold text-gray-800">
+              {summary.topCategory || "N/A"}
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow p-5 flex flex-col space-y-2">
+            <div className="flex items-center justify-between">
+              <h2 className="font-medium text-gray-600">Reports Generated</h2>
+              <FileText className="text-purple-500" />
+            </div>
+            <p className="text-2xl font-bold text-gray-800">
+              {summary.reportCount || 0}
+            </p>
+          </div>
+        </motion.div>
+      )}
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -107,7 +162,7 @@ const Reports: React.FC = () => {
           </ResponsiveContainer>
         </motion.div>
 
-        {/* Category Distribution Pie Chart */}
+        {/* Inventory Pie Chart */}
         <motion.div
           className="bg-white rounded-2xl shadow p-6"
           initial={{ opacity: 0, y: 20 }}
@@ -120,22 +175,25 @@ const Reports: React.FC = () => {
           <ResponsiveContainer width="100%" height={300}>
             <RePieChart>
               <Pie
-                data={pieData}
+                data={inventoryData}
                 cx="50%"
                 cy="50%"
                 labelLine={false}
                 outerRadius={100}
                 dataKey="value"
               >
-                {pieData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                {inventoryData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${entry.name}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
                 ))}
               </Pie>
               <Tooltip />
             </RePieChart>
           </ResponsiveContainer>
           <div className="flex justify-center mt-4 space-x-6 text-sm text-gray-600">
-            {pieData.map((item, i) => (
+            {inventoryData.map((item, i) => (
               <div key={i} className="flex items-center space-x-2">
                 <div
                   className="w-3 h-3 rounded-full"

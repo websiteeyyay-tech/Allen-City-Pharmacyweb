@@ -1,5 +1,4 @@
-// src/pages/admin/Orders.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ClipboardList,
@@ -13,39 +12,84 @@ import {
 
 interface Order {
   id: string;
-  customer: string;
-  date: string;
-  total: string;
-  status: "Processing" | "Delivered" | "Cancelled";
+  customerName?: string;
+  customer?: string;
+  date?: string;
+  orderDate?: string;
+  total?: string;
+  totalPrice?: number;
+  status: string;
 }
 
 const Orders: React.FC = () => {
-  const [orders] = useState<Order[]>([
-    {
-      id: "ORD-1001",
-      customer: "Jane Doe",
-      date: "2025-10-20",
-      total: "$89.99",
-      status: "Processing",
-    },
-    {
-      id: "ORD-1002",
-      customer: "John Smith",
-      date: "2025-10-21",
-      total: "$42.50",
-      status: "Delivered",
-    },
-    {
-      id: "ORD-1003",
-      customer: "Alice Johnson",
-      date: "2025-10-22",
-      total: "$24.00",
-      status: "Cancelled",
-    },
-  ]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  // ✅ Fetch orders from backend
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:5272/api/Orders");
+        const data = await res.json();
+        setOrders(data);
+      } catch (err) {
+        console.error("Error loading orders:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
+  }, []);
+
+  // ✅ Create new order
+  const handleNewOrder = async () => {
+    try {
+      const newOrder = {
+        productId: 1, // TODO: change to a real product ID in your DB
+        quantity: 1,
+        customerName: "Guest Customer",
+      };
+
+      const res = await fetch("http://127.0.0.1:5272/api/Orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newOrder),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        alert("✅ " + data.message);
+        setOrders((prev) => [...prev, data.order]);
+      } else {
+        console.error("Failed to create order:", res.statusText);
+      }
+    } catch (err) {
+      console.error("Error creating order:", err);
+    }
+  };
+
+  // ✅ Delete order
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this order?")) return;
+
+    try {
+      const res = await fetch(`http://127.0.0.1:5272/api/Orders/${id}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        setOrders((prev) => prev.filter((o) => o.id !== id));
+      } else {
+        console.error("Failed to delete order:", res.statusText);
+      }
+    } catch (err) {
+      console.error("Error deleting order:", err);
+    }
+  };
 
   const statusColors: Record<string, string> = {
     Processing: "bg-yellow-100 text-yellow-700",
+    Pending: "bg-yellow-100 text-yellow-700",
     Delivered: "bg-green-100 text-green-700",
     Cancelled: "bg-red-100 text-red-700",
   };
@@ -64,7 +108,10 @@ const Orders: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-2">
-          <button className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700 transition">
+          <button
+            onClick={handleNewOrder}
+            className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700 transition"
+          >
             <PackageCheck className="w-5 h-5" />
             <span>New Order</span>
           </button>
@@ -83,7 +130,9 @@ const Orders: React.FC = () => {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.1 }}
       >
-        {orders.length > 0 ? (
+        {loading ? (
+          <div className="text-center py-16 text-gray-500">Loading orders...</div>
+        ) : orders.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -112,13 +161,25 @@ const Orders: React.FC = () => {
                         {order.id}
                       </td>
                       <td className="py-3 px-4 text-gray-700">
-                        {order.customer}
+                        {order.customerName || order.customer || "N/A"}
                       </td>
-                      <td className="py-3 px-4 text-gray-600">{order.date}</td>
-                      <td className="py-3 px-4 text-gray-800">{order.total}</td>
+                      <td className="py-3 px-4 text-gray-600">
+                        {order.orderDate?.split("T")[0] ||
+                          order.date ||
+                          "—"}
+                      </td>
+                      <td className="py-3 px-4 text-gray-800">
+                        ₱
+                        {order.totalPrice
+                          ? order.totalPrice.toFixed(2)
+                          : order.total || "0.00"}
+                      </td>
                       <td className="py-3 px-4">
                         <span
-                          className={`px-3 py-1 rounded-full text-sm font-medium ${statusColors[order.status]}`}
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${
+                            statusColors[order.status] ||
+                            "bg-gray-100 text-gray-600"
+                          }`}
                         >
                           {order.status}
                         </span>
@@ -127,7 +188,10 @@ const Orders: React.FC = () => {
                         <button className="text-green-600 hover:text-green-800 transition">
                           <Truck className="w-5 h-5 inline" />
                         </button>
-                        <button className="text-red-500 hover:text-red-700 transition">
+                        <button
+                          onClick={() => handleDelete(order.id)}
+                          className="text-red-500 hover:text-red-700 transition"
+                        >
                           <XCircle className="w-5 h-5 inline" />
                         </button>
                       </td>

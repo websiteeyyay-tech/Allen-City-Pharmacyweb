@@ -1,5 +1,5 @@
 using PharmacyApp.Core.Interfaces;
-using PharmacyApp.Core.Services;
+using PharmacyApp.Infrastructure.Services; // ✅ Fixed path
 using PharmacyApp.Infrastructure.Data;
 using PharmacyApp.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +17,6 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<PharmacyDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-
 // ✅ Dependency Injection for Repositories & Services
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
@@ -27,6 +26,7 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // ------------------ CORS CONFIG ------------------
 // ✅ Allow localhost (React) and GitHub Codespaces

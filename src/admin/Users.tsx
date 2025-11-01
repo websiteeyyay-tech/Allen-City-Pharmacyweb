@@ -1,50 +1,62 @@
-// src/pages/admin/Users.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Users as UsersIcon,
-  UserPlus,
-  Search,
-  Mail,
-  Shield,
-  X,
-} from "lucide-react";
+import { Users as UsersIcon, UserPlus, Search, Mail, X } from "lucide-react";
+import axios from "axios";
+
+// ✅ Axios instance
+const api = axios.create({
+  baseURL: "http://127.0.0.1:5272/api", // adjust if backend runs on different port
+  headers: { "Content-Type": "application/json" },
+});
 
 interface User {
   id: number;
   name: string;
   email: string;
   role: string;
-  image: string;
+  image?: string;
 }
 
 const Users: React.FC = () => {
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+  const [newUser, setNewUser] = useState({
+    name: "",
+    email: "",
+    role: "",
+  });
 
-  const users: User[] = [
-    {
-      id: 1,
-      name: "Sarah Johnson",
-      email: "sarah@example.com",
-      role: "Admin",
-      image: "https://randomuser.me/api/portraits/women/65.jpg",
-    },
-    {
-      id: 2,
-      name: "Michael Tan",
-      email: "michael@example.com",
-      role: "Staff",
-      image: "https://randomuser.me/api/portraits/men/52.jpg",
-    },
-    {
-      id: 3,
-      name: "Emily Cruz",
-      email: "emily@example.com",
-      role: "Pharmacist",
-      image: "https://randomuser.me/api/portraits/women/68.jpg",
-    },
-  ];
+  // ✅ Fetch users from backend
+  const fetchUsers = async () => {
+    try {
+      const res = await api.get("/users");
+      setUsers(res.data);
+    } catch (err) {
+      console.error("Error fetching users:", err);
+    }
+  };
+
+  // ✅ Add new user to backend
+  const handleAddUser = async () => {
+    if (!newUser.name || !newUser.email || !newUser.role) {
+      alert("Please fill in all fields.");
+      return;
+    }
+    try {
+      await api.post("/users", newUser);
+      await fetchUsers();
+      setShowModal(false);
+      setNewUser({ name: "", email: "", role: "" });
+    } catch (err) {
+      console.error("Error saving user:", err);
+      alert("Failed to save user. Check console for details.");
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const filteredUsers = users.filter((u) =>
     u.name.toLowerCase().includes(search.toLowerCase())
@@ -94,7 +106,7 @@ const Users: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="text-gray-600 border-b">
-                <th className="py-3 px-4 font-medium">Profile</th>
+                <th className="py-3 px-4 font-medium">Name</th>
                 <th className="py-3 px-4 font-medium">Email</th>
                 <th className="py-3 px-4 font-medium">Role</th>
               </tr>
@@ -106,15 +118,15 @@ const Users: React.FC = () => {
                   className="hover:bg-teal-50 transition-all cursor-pointer border-b"
                   whileHover={{ scale: 1.01 }}
                 >
-                  <td className="py-3 px-4 flex items-center space-x-3">
-                    <img
-                      src={user.image}
-                      alt={user.name}
-                      className="w-10 h-10 rounded-full object-cover shadow"
-                    />
-                    <span className="font-medium text-gray-800">
-                      {user.name}
-                    </span>
+                  <td className="py-3 px-4 font-medium text-gray-800 flex items-center gap-3">
+                    {user.image && (
+                      <img
+                        src={user.image}
+                        alt={user.name}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                    )}
+                    {user.name}
                   </td>
                   <td className="py-3 px-4 text-gray-600 flex items-center gap-2">
                     <Mail className="w-4 h-4 text-gray-400" /> {user.email}
@@ -174,18 +186,32 @@ const Users: React.FC = () => {
                 <input
                   type="text"
                   placeholder="Full Name"
+                  value={newUser.name}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, name: e.target.value })
+                  }
                   className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-teal-400 focus:outline-none"
                 />
                 <input
                   type="email"
                   placeholder="Email Address"
+                  value={newUser.email}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, email: e.target.value })
+                  }
                   className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-teal-400 focus:outline-none"
                 />
-                <select className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-teal-400 focus:outline-none">
-                  <option>Choose Role</option>
-                  <option>Admin</option>
-                  <option>Pharmacist</option>
-                  <option>Staff</option>
+                <select
+                  value={newUser.role}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, role: e.target.value })
+                  }
+                  className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-teal-400 focus:outline-none"
+                >
+                  <option value="">Choose Role</option>
+                  <option value="Admin">Admin</option>
+                  <option value="Pharmacist">Pharmacist</option>
+                  <option value="Staff">Staff</option>
                 </select>
               </div>
 
@@ -196,7 +222,10 @@ const Users: React.FC = () => {
                 >
                   Cancel
                 </button>
-                <button className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white shadow transition">
+                <button
+                  onClick={handleAddUser}
+                  className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white shadow transition"
+                >
                   Save User
                 </button>
               </div>
