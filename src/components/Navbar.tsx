@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, NavLink, useNavigate, Navigate } from "react-router-dom";
-import { FaShoppingCart, FaBars, FaTimes, FaUserCircle, FaChevronDown } from "react-icons/fa";
+import { Link, NavLink, useNavigate, Navigate, useLocation } from "react-router-dom";
+import { FaShoppingCart, FaBars, FaTimes, FaUserCircle } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import type { JSX } from "react/jsx-runtime";
@@ -18,16 +18,21 @@ interface User {
   email?: string;
   role?: string;
   token?: string;
-  avatar?: string; // <- added avatar property
+  avatar?: string;
 }
 
 const Navbar: React.FC<NavbarProps> = ({ cartCount, onCartClick }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isAdminOpen, setIsAdminOpen] = useState(false);
   const navigate = useNavigate();
   const profileRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
+
+  // Hide navbar on admin routes
+  if (location.pathname.startsWith("/admin")) {
+    return null;
+  }
 
   // Load user on mount + listen for storage changes
   useEffect(() => {
@@ -52,7 +57,6 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount, onCartClick }) => {
     const handleClickOutside = (e: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
         setIsProfileOpen(false);
-        setIsAdminOpen(false);
       }
     };
     document.addEventListener("click", handleClickOutside);
@@ -72,13 +76,19 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount, onCartClick }) => {
           email: response.data.user.email,
           role: response.data.user.role,
           token: response.data.token,
-          avatar: response.data.user.avatar, // <- store avatar
+          avatar: response.data.user.avatar,
         };
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("user", JSON.stringify(loggedUser));
         setUser(loggedUser);
         window.dispatchEvent(new Event("storage"));
-        navigate("/");
+
+        // ✅ Redirect admin to dashboard
+        if (loggedUser.role?.trim().toLowerCase() === "admin") {
+          navigate("/admin/dashboard");
+        } else {
+          navigate("/");
+        }
       }
     } catch (err) {
       console.error("Login failed:", err);
@@ -115,7 +125,9 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount, onCartClick }) => {
   };
 
   const navLinkStyles = ({ isActive }: { isActive: boolean }) =>
-    `transition-colors duration-300 ${isActive ? "text-blue-600 font-semibold" : "text-gray-700 hover:text-blue-600"}`;
+    `transition-colors duration-300 ${
+      isActive ? "text-blue-600 font-semibold" : "text-gray-700 hover:text-blue-600"
+    }`;
 
   return (
     <>
@@ -123,19 +135,36 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount, onCartClick }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             {/* BRAND */}
-            <Link to="/" className="text-xl font-bold text-blue-700 tracking-tight hover:text-blue-800 transition">
+            <Link
+              to="/"
+              className="text-xl font-bold text-blue-700 tracking-tight hover:text-blue-800 transition"
+            >
               Allan City Pharmacy
             </Link>
 
             {/* DESKTOP MENU */}
             <div className="hidden md:flex items-center space-x-8">
-              <NavLink to="/" className={navLinkStyles} end>Home</NavLink>
-              <NavLink to="/shop" className={navLinkStyles}>Shop</NavLink>
-              <NavLink to="/services" className={navLinkStyles}>Services</NavLink>
-              <NavLink to="/contact" className={navLinkStyles}>Contact</NavLink>
-              <NavLink to="/store-locator" className={navLinkStyles}>Store Locator</NavLink>
-              <NavLink to="/order" className={navLinkStyles}>Order</NavLink>
-              <NavLink to="/checkout" className={navLinkStyles}>Checkout</NavLink>
+              <NavLink to="/" className={navLinkStyles} end>
+                Home
+              </NavLink>
+              <NavLink to="/shop" className={navLinkStyles}>
+                Shop
+              </NavLink>
+              <NavLink to="/services" className={navLinkStyles}>
+                Services
+              </NavLink>
+              <NavLink to="/contact" className={navLinkStyles}>
+                Contact
+              </NavLink>
+              <NavLink to="/store-locator" className={navLinkStyles}>
+                Store Locator
+              </NavLink>
+              <NavLink to="/order" className={navLinkStyles}>
+                Order
+              </NavLink>
+              <NavLink to="/checkout" className={navLinkStyles}>
+                Checkout
+              </NavLink>
 
               {/* CART ICON */}
               <button
@@ -158,7 +187,6 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount, onCartClick }) => {
                     onClick={() => setIsProfileOpen((prev) => !prev)}
                     className="ml-4 text-gray-700 hover:text-blue-600 text-3xl transition transform hover:scale-110"
                   >
-                    {/* Show avatar if available, fallback to icon */}
                     {user.avatar ? (
                       <motion.img
                         src={user.avatar}
@@ -193,41 +221,6 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount, onCartClick }) => {
                           <p className="font-semibold text-green-700">{user.username}</p>
                           <p className="text-sm text-gray-500">{user.email || user.role}</p>
                         </div>
-
-                        {/* Admin Menu */}
-                        {user.role?.trim().toLowerCase() === "admin" && (
-                          <div className="border-b border-green-100">
-                            <button
-                              onClick={() => setIsAdminOpen((prev) => !prev)}
-                              className="w-full text-left px-6 py-3 flex items-center justify-between text-green-700 font-semibold hover:bg-green-100 transition"
-                            >
-                              Admin Panel
-                              <FaChevronDown className={`ml-2 transition-transform ${isAdminOpen ? "rotate-180" : ""}`} />
-                            </button>
-                            {isAdminOpen && (
-                              <div className="pl-6 pb-2 flex flex-col gap-1">
-                                {[ 
-                                  { name: "Dashboard", path: "/admin/dashboard" },
-                                  { name: "Inventory", path: "/admin/inventory" },
-                                  { name: "Orders", path: "/admin/orders" },
-                                  { name: "Products", path: "/admin/products" },
-                                  { name: "Reports", path: "/admin/reports" },
-                                  { name: "Users", path: "/admin/users" },
-                                  { name: "Settings", path: "/admin/settings" },
-                                ].map((item) => (
-                                  <Link
-                                    key={item.name}
-                                    to={item.path}
-                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 rounded-lg transition"
-                                    onClick={() => setIsProfileOpen(false)}
-                                  >
-                                    {item.name}
-                                  </Link>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
 
                         {/* User Links */}
                         <div className="flex flex-col">
@@ -290,13 +283,27 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount, onCartClick }) => {
         {/* MOBILE MENU */}
         {isOpen && (
           <div className="md:hidden bg-white border-t border-gray-100 shadow-lg flex flex-col">
-            <NavLink to="/" className={navLinkStyles} end onClick={() => setIsOpen(false)}>Home</NavLink>
-            <NavLink to="/shop" className={navLinkStyles} onClick={() => setIsOpen(false)}>Shop</NavLink>
-            <NavLink to="/services" className={navLinkStyles} onClick={() => setIsOpen(false)}>Services</NavLink>
-            <NavLink to="/contact" className={navLinkStyles} onClick={() => setIsOpen(false)}>Contact</NavLink>
-            <NavLink to="/store-locator" className={navLinkStyles} onClick={() => setIsOpen(false)}>Store Locator</NavLink>
-            <NavLink to="/order" className={navLinkStyles} onClick={() => setIsOpen(false)}>Order</NavLink>
-            <NavLink to="/checkout" className={navLinkStyles} onClick={() => setIsOpen(false)}>Checkout</NavLink>
+            <NavLink to="/" className={navLinkStyles} end onClick={() => setIsOpen(false)}>
+              Home
+            </NavLink>
+            <NavLink to="/shop" className={navLinkStyles} onClick={() => setIsOpen(false)}>
+              Shop
+            </NavLink>
+            <NavLink to="/services" className={navLinkStyles} onClick={() => setIsOpen(false)}>
+              Services
+            </NavLink>
+            <NavLink to="/contact" className={navLinkStyles} onClick={() => setIsOpen(false)}>
+              Contact
+            </NavLink>
+            <NavLink to="/store-locator" className={navLinkStyles} onClick={() => setIsOpen(false)}>
+              Store Locator
+            </NavLink>
+            <NavLink to="/order" className={navLinkStyles} onClick={() => setIsOpen(false)}>
+              Order
+            </NavLink>
+            <NavLink to="/checkout" className={navLinkStyles} onClick={() => setIsOpen(false)}>
+              Checkout
+            </NavLink>
           </div>
         )}
       </nav>

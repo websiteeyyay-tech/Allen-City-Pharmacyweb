@@ -1,8 +1,9 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
 const ServicesPage: React.FC = () => {
+  const navigate = useNavigate();
   const services = [
     {
       title: "Prescription Refills",
@@ -56,7 +57,12 @@ const ServicesPage: React.FC = () => {
       rating: "⭐⭐⭐⭐⭐",
     },
   ];
-
+ useEffect(() => {
+    const user = localStorage.getItem("user"); // Or localStorage.getItem("token")
+    if (!user) {
+      navigate("/login");
+    }
+  }, [navigate]);
   const trustBadges = [
     { icon: "🏥", text: "DOH Licensed Pharmacy" },
     { icon: "👩‍⚕️", text: "Certified Pharmacists" },

@@ -122,7 +122,12 @@ export default function ShopPage({ onAdd }: ShopPageProps) {
   const [sortBy, setSortBy] = useState("featured");
   const [apiProducts, setApiProducts] = useState<Product[]>([]);
   const navigate = useNavigate();
-
+ useEffect(() => {
+    const user = localStorage.getItem("user"); // Or localStorage.getItem("token")
+    if (!user) {
+      navigate("/login");
+    }
+  }, [navigate]);
   // ✅ Fetch from backend (merge with static)
   useEffect(() => {
     fetch("http://localhost:5272/api/Products")
