@@ -1,80 +1,43 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using PharmacyApp.Application.DTOs;
-using PharmacyApp.Application.Interfaces;
+﻿using PharmacyApp.Application.Interfaces;
 using PharmacyApp.Core.Entities;
 using PharmacyApp.Core.Interfaces;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace PharmacyApp.Application.Services
 {
     public class ProductService : IProductService
     {
-        private readonly IProductRepository _repository;
+        private readonly IProductRepository _productRepository;
 
-        public ProductService(IProductRepository repository)
+        public ProductService(IProductRepository productRepository)
         {
-            _repository = repository;
+            _productRepository = productRepository;
         }
 
-        public async Task<IEnumerable<ProductDto>> GetAllAsync()
+        public async Task<IEnumerable<Product>> GetAllAsync()
         {
-            var products = await _repository.GetAllAsync();
-            return products.Select(p => new ProductDto
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Price = p.Price
-            });
+            return await _productRepository.GetAllAsync();
         }
 
-        public async Task<ProductDto> GetByIdAsync(int id)
+        public async Task<Product?> GetByIdAsync(int id)
         {
-            var product = await _repository.GetByIdAsync(id);
-            if (product == null) 
-                return null; // or throw exception if you prefer
-
-            return new ProductDto
-            {
-                Id = product.Id,
-                Name = product.Name,
-                Price = product.Price
-            };
+            return await _productRepository.GetByIdAsync(id);
         }
 
-        public async Task<ProductDto> CreateAsync(ProductDto productDto)
+        public async Task<Product> CreateAsync(Product product)
         {
-            var product = new Product
-            {
-                Name = productDto.Name,
-                Price = productDto.Price
-            };
-
-            await _repository.AddAsync(product);
-
-            // Update ID after creation if your repository sets it
-            productDto.Id = product.Id;
-
-            return productDto;
+            return await _productRepository.AddAsync(product);
         }
 
-        public async Task<ProductDto> UpdateAsync(int id, ProductDto productDto)
+        public async Task<Product> UpdateAsync(Product product)
         {
-            var product = await _repository.GetByIdAsync(id);
-            if (product == null)
-                return null;
-
-            product.Name = productDto.Name;
-            product.Price = productDto.Price;
-
-            await _repository.UpdateAsync(product);
-            return productDto;
+            return await _productRepository.UpdateAsync(product);
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task DeleteAsync(int id)
         {
-            await _repository.DeleteAsync(id);
-            return true;
+            await _productRepository.DeleteAsync(id);
         }
     }
 }

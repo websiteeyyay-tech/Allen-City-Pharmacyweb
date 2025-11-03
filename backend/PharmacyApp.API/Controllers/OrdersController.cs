@@ -3,11 +3,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using PharmacyApp.Application.Interfaces;
+using PharmacyApp.Core.Entities; // ✅ use real Product model here
 
 namespace PharmacyApp.API.Controllers
 {
     // ================================
-    // 💊 Simple Entity Models
+    // 💊 Simple Entity Model for Order
     // ================================
     public class Order
     {
@@ -20,16 +22,8 @@ namespace PharmacyApp.API.Controllers
         public string Status { get; set; } = "Pending";
     }
 
-    public class Product
-    {
-        public int Id { get; set; }
-        public string? Name { get; set; }
-        public decimal Price { get; set; }
-        public int Stock { get; set; }
-    }
-
     // ================================
-    // 💊 Service Interfaces
+    // 💊 Order Service Interface
     // ================================
     public interface IOrderService
     {
@@ -39,14 +33,8 @@ namespace PharmacyApp.API.Controllers
         Task DeleteOrderAsync(int id);
     }
 
-    public interface IProductService
-    {
-        Task<Product?> GetByIdAsync(int id);
-    }
-
     // ================================
-    // 💊 Mock Service Implementations
-    // (In a real app, these connect to SQL)
+    // 💊 Mock Product Service
     // ================================
     public class MockProductService : IProductService
     {
@@ -57,25 +45,52 @@ namespace PharmacyApp.API.Controllers
             new Product { Id = 3, Name = "Vitamin C", Price = 5, Stock = 200 }
         };
 
+        public Task<IEnumerable<Product>> GetAllAsync()
+            => Task.FromResult(_products.AsEnumerable());
+
         public Task<Product?> GetByIdAsync(int id)
+            => Task.FromResult(_products.FirstOrDefault(p => p.Id == id));
+
+        public Task<Product> CreateAsync(Product product)
         {
-            return Task.FromResult(_products.FirstOrDefault(p => p.Id == id));
+            product.Id = _products.Count > 0 ? _products.Max(p => p.Id) + 1 : 1;
+            _products.Add(product);
+            return Task.FromResult(product);
+        }
+
+        public Task<Product> UpdateAsync(Product product)
+        {
+            var existing = _products.FirstOrDefault(p => p.Id == product.Id);
+            if (existing != null)
+            {
+                existing.Name = product.Name;
+                existing.Price = product.Price;
+                existing.Stock = product.Stock;
+            }
+            return Task.FromResult(product);
+        }
+
+        public Task DeleteAsync(int id)
+        {
+            var product = _products.FirstOrDefault(p => p.Id == id);
+            if (product != null)
+                _products.Remove(product);
+            return Task.CompletedTask;
         }
     }
 
+    // ================================
+    // 💊 Mock Order Service
+    // ================================
     public class MockOrderService : IOrderService
     {
         private readonly List<Order> _orders = new();
 
         public Task<IEnumerable<Order>> GetAllOrdersAsync()
-        {
-            return Task.FromResult(_orders.AsEnumerable());
-        }
+            => Task.FromResult(_orders.AsEnumerable());
 
         public Task<Order?> GetOrderByIdAsync(int id)
-        {
-            return Task.FromResult(_orders.FirstOrDefault(o => o.Id == id));
-        }
+            => Task.FromResult(_orders.FirstOrDefault(o => o.Id == id));
 
         public Task CreateOrderAsync(Order order)
         {
@@ -94,7 +109,7 @@ namespace PharmacyApp.API.Controllers
     }
 
     // ================================
-    // 💊 Controller
+    // 💊 Orders Controller
     // ================================
     [ApiController]
     [Route("api/[controller]")]
@@ -105,7 +120,6 @@ namespace PharmacyApp.API.Controllers
 
         public OrdersController()
         {
-            // Using mock services for demo
             _orderService = new MockOrderService();
             _productService = new MockProductService();
         }

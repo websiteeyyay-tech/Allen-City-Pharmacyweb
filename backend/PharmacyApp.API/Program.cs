@@ -44,15 +44,9 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins(
-                "http://localhost:5173",  // Vite
-                "http://127.0.0.1:5173",
-                "http://localhost:3000",  // CRA
-                "http://127.0.0.1:3000"
-            )
             .SetIsOriginAllowed(origin =>
-                origin.Contains(".app.github.dev") || // GitHub Codespaces
-                origin.StartsWith("http://localhost") ||
+                origin.Contains(".app.github.dev") ||       // ✅ GitHub Codespaces
+                origin.StartsWith("http://localhost") ||     // ✅ Local dev
                 origin.StartsWith("http://127.0.0.1"))
             .AllowAnyHeader()
             .AllowAnyMethod()
@@ -60,6 +54,7 @@ builder.Services.AddCors(options =>
     });
 });
 
+// ------------------ BUILD APP ------------------
 var app = builder.Build();
 
 // ------------------ MIDDLEWARE ------------------
@@ -69,12 +64,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// ✅ Apply CORS before routing
+// ✅ Enable HTTP redirection and CORS properly
 app.UseCors("AllowFrontend");
-
 app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// ✅ Bind to all network interfaces (important for Codespaces / localhost frontend)
+app.Urls.Add("http://0.0.0.0:5272");
 
 app.Run();

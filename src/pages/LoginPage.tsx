@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
-import "./LoginPage.css"; // 👈 create this file for subtle input/hover effects
+import "./LoginPage.css"; 
 
 // ✅ AXIOS INSTANCE
 const api = axios.create({

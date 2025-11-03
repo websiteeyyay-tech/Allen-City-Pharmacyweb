@@ -9,15 +9,46 @@ const SignUpPage: React.FC = () => {
     confirmPassword: "",
   });
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ): void => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent): void => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
+
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
+
+    const payload = {
+      username: formData.username,
+      email: formData.email,
+      passwordHash: formData.password,
+      role: "customer",
+    };
+
+    try {
+      const response = await fetch("http://localhost:5272/api/Auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Registration failed:", errorData);
+        alert(`Registration failed: ${errorData.message || response.statusText}`);
+        return;
+      }
+
+      const data = await response.json();
+      console.log("✅ Registration success:", data);
+      alert("Account created successfully!");
+    } catch (error) {
+      console.error("❌ API connection error:", error);
+      alert("Cannot connect to backend. Make sure your API is running on port 5272.");
+    }
   };
 
   return (

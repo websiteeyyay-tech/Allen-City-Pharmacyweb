@@ -1,52 +1,63 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using PharmacyApp.Infrastructure.Data;
+using PharmacyApp.Application.Interfaces;
+using PharmacyApp.Core.Entities;
+using System.Threading.Tasks;
 
 namespace PharmacyApp.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AdminDashboardController : ControllerBase
+    public class ProductsController : ControllerBase
     {
-        private readonly PharmacyDbContext _context;
+        private readonly IProductService _service;
 
-        public AdminDashboardController(PharmacyDbContext context)
+        public ProductsController(IProductService service)
         {
-            _context = context;
+            _service = service;
         }
 
-        // GET: api/AdminDashboard
         [HttpGet]
-        public async Task<IActionResult> GetDashboard()
+        public async Task<IActionResult> GetAll()
         {
-            // Totals
-            var totalSales = await _context.Orders.SumAsync(o => o.TotalAmount);
-            var totalOrders = await _context.Orders.CountAsync();
-            var totalUsers = await _context.Users.CountAsync();
-            var lowStock = await _context.Products.CountAsync(p => p.Stock < 10);
+            var products = await _service.GetAllAsync();
+            return Ok(products);
+        }
 
-            // Monthly sales trend (last 6 months)
-            var recentSales = await _context.Orders
-                .GroupBy(o => new { o.OrderDate.Month, o.OrderDate.Year })
-                .Select(g => new
-                {
-                    month = g.Key.Month,
-                    year = g.Key.Year,
-                    sales = g.Sum(x => x.TotalAmount),
-                    orders = g.Count()
-                })
-                .OrderBy(x => x.year).ThenBy(x => x.month)
-                .Take(6)
-                .ToListAsync();
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(int id)
+        {
+            var product = await _service.GetByIdAsync(id);
+            if (product == null) return NotFound();
+            return Ok(product);
+        }
 
-            return Ok(new
-            {
-                totalSales,
-                totalOrders,
-                totalUsers,
-                lowStock,
-                recentSales
-            });
+        [HttpPost]
+        public async Task<IActionResult> Add(Product product)
+        {
+            var created = await _service.CreateAsync(product);
+            return CreatedAtAction(nameof(Get), new { id = created.Id }, created);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, Product product)
+        {
+            if (id != product.Id) return BadRequest();
+
+            var existing = await _service.GetByIdAsync(id);
+            if (existing == null) return NotFound();
+
+            await _service.UpdateAsync(product);
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var existing = await _service.GetByIdAsync(id);
+            if (existing == null) return NotFound();
+
+            await _service.DeleteAsync(id);
+            return NoContent();
         }
     }
 }
