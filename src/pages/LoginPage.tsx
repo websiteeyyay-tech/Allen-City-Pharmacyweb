@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
-import "./LoginPage.css"; 
+import "./LoginPage.css";
 
 // ✅ AXIOS INSTANCE
 const api = axios.create({
@@ -93,13 +93,32 @@ const LoginPage: React.FC = () => {
     try {
       setLoading(true);
       const response = await api.post("/Auth/login", { username, passwordHash: password });
+
       const user = response.data.user || response.data;
       const loggedUser = { id: user.id, username: user.username, role: user.role?.toLowerCase() || "user" };
+
       localStorage.setItem("user", JSON.stringify(loggedUser));
       setToast({ message: `Welcome back, ${loggedUser.username}!`, type: "success" });
-      setTimeout(() => (window.location.href = loggedUser.role === "admin" ? "/admin/dashboard" : "/"), 1200);
+
+      setTimeout(() => {
+        window.location.href = loggedUser.role === "admin" ? "/admin/dashboard" : "/";
+      }, 1200);
+
     } catch (error: any) {
-      setToast({ message: "Login failed: " + (error.response?.data?.message || error.message), type: "error" });
+      const message = error.response?.data?.message || error.message;
+
+      // 🔍 If user doesn’t exist in DB, redirect to signup
+      if (message.toLowerCase().includes("user not found") || message.toLowerCase().includes("invalid username")) {
+        setToast({
+          message: "Account not found. Please sign up first!",
+          type: "error",
+        });
+        setTimeout(() => setStep("signup"), 2000);
+      } else if (message.toLowerCase().includes("invalid password")) {
+        setToast({ message: "Incorrect password. Try again.", type: "error" });
+      } else {
+        setToast({ message: "Login failed: " + message, type: "error" });
+      }
     } finally {
       setLoading(false);
     }
@@ -252,7 +271,6 @@ const LoginPage: React.FC = () => {
                   </button>
                 </p>
 
-                {/* ✨ Loader Overlay */}
                 {loading && (
                   <motion.div
                     initial={{ opacity: 0 }}
@@ -344,7 +362,6 @@ const LoginPage: React.FC = () => {
                   </p>
                 </form>
 
-                {/* ✨ Loader Overlay */}
                 {loading && (
                   <motion.div
                     initial={{ opacity: 0 }}

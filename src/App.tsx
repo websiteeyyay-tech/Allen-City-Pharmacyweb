@@ -33,6 +33,11 @@ import Reports from "./admin/Reports";
 import Settings from "./admin/Settings";
 import Users from "./admin/Users";
 
+// 💊 Pharmacist Pages
+import PharmacistLayout from "./pharmacist/PharmacistLayout";
+import MedicinesPage from "./pharmacist/MedicinesPage";
+import PharmacistMedicines from "./pharmacist/PharmacistMedicines";
+
 // 🧩 Components
 import Navbar from "./components/Navbar";
 import PromoBar from "./components/PromoBar";
@@ -169,7 +174,7 @@ function App() {
   }, [cart]);
 
   const updateCartCount = (cartItems: any[]) => {
-    const total = cartItems.reduce((sum, item) => sum + item.qty, 0);
+    const total = cartItems.reduce((sum, item) => sum + (item.qty || 0), 0);
     setCartCount(total);
   };
 
@@ -224,8 +229,7 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Hide Navbar in admin area */}
-      {!location.pathname.startsWith("/admin") && (
+      {!location.pathname.startsWith("/admin") && !location.pathname.startsWith("/pharmacist") && (
         <>
           <Navbar
             cartCount={cartCount}
@@ -261,7 +265,7 @@ function App() {
           <Route path="/edit-profile" element={<EditProfilePage />} />
           <Route path="/address" element={<AddressPage />} />
 
-          {/* 🧑‍💼 Admin Routes (With Sidebar Layout) */}
+          {/* 🧑‍💼 Admin Routes */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="inventory" element={<Inventory />} />
@@ -271,27 +275,37 @@ function App() {
             <Route path="users" element={<Users />} />
           </Route>
 
+          {/* 💊 Pharmacist Routes */}
+          <Route path="/pharmacist" element={<PharmacistLayout />}>
+            <Route path="medicines" element={<MedicinesPage />} />
+            <Route path="pharmacist-medicines" element={<PharmacistMedicines />} />
+          </Route>
+
           <Route path="*" element={<HomePage />} />
         </Routes>
       </main>
 
-      {!location.pathname.startsWith("/admin") && <Footer />}
+      {!location.pathname.startsWith("/admin") &&
+        !location.pathname.startsWith("/pharmacist") && <Footer />}
 
-      {isCartOpen && !location.pathname.startsWith("/admin") && (
-        <div
-          ref={cartRef}
-          className="fixed right-6 top-24 z-50 hidden md:block animate-slide-in"
-        >
-          <CartPanel
-            cart={cart}
-            setQty={setQty}
-            removeFromCart={removeFromCart}
-            clearCart={clearCart}
-          />
-        </div>
-      )}
+      {isCartOpen &&
+        !location.pathname.startsWith("/admin") &&
+        !location.pathname.startsWith("/pharmacist") && (
+          <div
+            ref={cartRef}
+            className="fixed right-6 top-24 z-50 hidden md:block animate-slide-in"
+          >
+            <CartPanel
+              cart={cart}
+              setQty={setQty}
+              removeFromCart={removeFromCart}
+              clearCart={clearCart}
+            />
+          </div>
+        )}
 
-      {!location.pathname.startsWith("/admin") && <ChatBot />}
+      {!location.pathname.startsWith("/admin") &&
+        !location.pathname.startsWith("/pharmacist") && <ChatBot />}
     </div>
   );
 }
