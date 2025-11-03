@@ -316,6 +316,7 @@ const HomePage: React.FC = () => {
           )}
         </div>
       </section>
+      
 
       {/* CATEGORIES */}
       <section className="py-12">
@@ -407,24 +408,6 @@ const HomePage: React.FC = () => {
   <div className="absolute left-0 top-0 h-full w-16 bg-gradient-to-r from-white to-transparent pointer-events-none" />
   <div className="absolute right-0 top-0 h-full w-16 bg-gradient-to-l from-white to-transparent pointer-events-none" />
 </div>
-
-      {/* Trust Banner */}
-      <div className="flex justify-center mt-12">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white/90 rounded-full py-3 px-8 shadow-lg border border-green-100 backdrop-blur-md"
-        >
-          <div className="flex gap-8 items-center">
-            <TrustItem icon="🔬" title="Clinically Tested" subtitle="Third-party checked" />
-            <div className="w-px h-6 bg-gray-200" />
-            <TrustItem icon="✅" title="100% Genuine" subtitle="Verified brands" />
-            <div className="w-px h-6 bg-gray-200" />
-            <TrustItem icon="⏱️" title="Same-day Delivery" subtitle="Available in many areas" />
-          </div>
-        </motion.div>
-      </div>
 
       {/* TESTIMONIALS */}
       <section className="py-12">

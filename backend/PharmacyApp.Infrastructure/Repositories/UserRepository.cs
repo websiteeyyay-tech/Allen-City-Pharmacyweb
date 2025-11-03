@@ -1,6 +1,9 @@
 ﻿using PharmacyApp.Core.Entities;
 using PharmacyApp.Core.Interfaces;
 using PharmacyApp.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace PharmacyApp.Infrastructure.Repositories
 {
@@ -8,39 +11,30 @@ namespace PharmacyApp.Infrastructure.Repositories
     {
         private readonly PharmacyDbContext _context;
 
-        public UserRepository(PharmacyDbContext context) // ✅ fixed constructor name
+        public UserRepository(PharmacyDbContext context)
         {
             _context = context;
         }
 
-        public User? GetById(int id)
-        {
-            return _context.Users.FirstOrDefault(u => u.Id == id);
-        }
+        public async Task<IEnumerable<User>> GetAllAsync()
+            => await _context.Users.ToListAsync();
 
-        public User? GetByUsername(string username)
-        {
-            return _context.Users.FirstOrDefault(u => u.Username == username);
-        }
+        public async Task<User?> GetByIdAsync(int id)
+            => await _context.Users.FindAsync(id);
 
-        public void Add(User user)
-        {
-            _context.Users.Add(user);
-        }
+        public async Task<User?> GetByUsernameAsync(string username)
+            => await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
 
-        public void Delete(User user)
-        {
-            _context.Users.Remove(user);
-        }
+        public async Task AddAsync(User user)
+            => await _context.Users.AddAsync(user);
 
-        public void Update(User user)
-        {
-            _context.Users.Update(user);
-        }
+        public async Task UpdateAsync(User user)
+            => _context.Users.Update(user);
 
-        public void SaveChanges()
-        {
-            _context.SaveChanges();
-        }
+        public async Task DeleteAsync(User user)
+            => _context.Users.Remove(user);
+
+        public async Task SaveChangesAsync()
+            => await _context.SaveChangesAsync();
     }
 }

@@ -10,13 +10,17 @@ namespace PharmacyApp.API.Controllers
     {
         private readonly IProductService _service;
 
-            public ProductsController(IProductService service)
-            {
-                _service = service;
-            }
+        public ProductsController(IProductService service)
+        {
+            _service = service;
+        }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll() => Ok(await _service.GetAllAsync());
+        public async Task<IActionResult> GetAll()
+        {
+            var products = await _service.GetAllAsync();
+            return Ok(products);
+        }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
@@ -37,14 +41,19 @@ namespace PharmacyApp.API.Controllers
         public async Task<IActionResult> Update(int id, Product product)
         {
             if (id != product.Id) return BadRequest();
-            await _service.UpdateAsync(product);
+
+            var updated = await _service.UpdateAsync(id, product);
+            if (updated == null) return NotFound();
+
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            await _service.DeleteAsync(id);
+            var deleted = await _service.DeleteAsync(id);
+            if (!deleted) return NotFound();
+
             return NoContent();
         }
     }

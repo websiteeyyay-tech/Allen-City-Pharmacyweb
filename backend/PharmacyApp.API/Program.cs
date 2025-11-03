@@ -1,71 +1,78 @@
+using Microsoft.EntityFrameworkCore;
+using PharmacyApp.Application.Interfaces;
+using PharmacyApp.Application.Services;
 using PharmacyApp.Core.Interfaces;
-using PharmacyApp.Infrastructure.Services; // ✅ Fixed path
 using PharmacyApp.Infrastructure.Data;
 using PharmacyApp.Infrastructure.Repositories;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ------------------ SERVICES ------------------
 
-// ✅ Add Controllers + Swagger
+// Controllers + Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// ✅ Database Context (SQL Server)
+// ------------------ DATABASE ------------------
 builder.Services.AddDbContext<PharmacyDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection")
+    )
+);
 
-// ✅ Dependency Injection for Repositories & Services
+// ------------------ DEPENDENCY INJECTION ------------------
+
+// Generic Repository
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+
+// Repositories
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+// Services
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
-builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IReportService, ReportService>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 
 // ------------------ CORS CONFIG ------------------
-// ✅ Allow localhost (React) and GitHub Codespaces
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
             .WithOrigins(
-                "http://localhost:5173",     // Vite
-                "http://127.0.0.1:5173",    // Vite alternate
-                "http://localhost:3000",    // CRA (optional)
+                "http://localhost:5173",  // Vite
+                "http://127.0.0.1:5173",
+                "http://localhost:3000",  // CRA
                 "http://127.0.0.1:3000"
             )
             .SetIsOriginAllowed(origin =>
-                origin.Contains(".app.github.dev") ||  // For Codespaces
+                origin.Contains(".app.github.dev") || // GitHub Codespaces
                 origin.StartsWith("http://localhost") ||
                 origin.StartsWith("http://127.0.0.1"))
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
 var app = builder.Build();
 
 // ------------------ MIDDLEWARE ------------------
-
-// ✅ Enable Swagger in Development
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// ✅ Use CORS *before* routing & authorization
+// ✅ Apply CORS before routing
 app.UseCors("AllowFrontend");
 
-app.UseHttpsRedirection(); // Optional, but recommended if you use SSL
-
+app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();

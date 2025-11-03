@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using PharmacyApp.Infrastructure.Data;
 
 namespace PharmacyApp.API.Controllers
 {
@@ -7,9 +8,9 @@ namespace PharmacyApp.API.Controllers
     [Route("api/[controller]")]
     public class AdminDashboardController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly PharmacyDbContext _context;
 
-        public AdminDashboardController(AppDbContext context)
+        public AdminDashboardController(PharmacyDbContext context)
         {
             _context = context;
         }
@@ -22,7 +23,7 @@ namespace PharmacyApp.API.Controllers
             var totalSales = await _context.Orders.SumAsync(o => o.TotalAmount);
             var totalOrders = await _context.Orders.CountAsync();
             var totalUsers = await _context.Users.CountAsync();
-            var lowStock = await _context.Products.CountAsync(p => p.StockQuantity < 10);
+            var lowStock = await _context.Products.CountAsync(p => p.Stock < 10);
 
             // Monthly sales trend (last 6 months)
             var recentSales = await _context.Orders

@@ -29,7 +29,6 @@ import AddressPage from "./pages/AddressPage";
 import Dashboard from "./admin/Dashboard";
 import Inventory from "./admin/Inventory";
 import Orders from "./admin/Orders";
-import Products from "./admin/Products";
 import Reports from "./admin/Reports";
 import Settings from "./admin/Settings";
 import Users from "./admin/Users";
@@ -267,7 +266,6 @@ function App() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="inventory" element={<Inventory />} />
             <Route path="orders" element={<Orders />} />
-            <Route path="products" element={<Products />} />
             <Route path="reports" element={<Reports />} />
             <Route path="settings" element={<Settings />} />
             <Route path="users" element={<Users />} />
