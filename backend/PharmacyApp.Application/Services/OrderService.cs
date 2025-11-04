@@ -2,6 +2,7 @@ using PharmacyApp.Core.Entities;
 using PharmacyApp.Core.Interfaces;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using PharmacyApp.Application.Interfaces;
 
 namespace PharmacyApp.Application.Services
 {

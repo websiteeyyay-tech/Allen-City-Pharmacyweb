@@ -1,10 +1,9 @@
 {
   "ExpandedNodes": [
-    "",
     "\\backend",
-    "\\backend\\PharmacyApp.API",
-    "\\backend\\PharmacyApp.Infrastructure"
+    "\\backend\\PharmacyApp.API\\Controllers",
+    "\\backend\\PharmacyApp.Infrastructure",
+    "\\backend\\PharmacyApp.Infrastructure\\Data"
   ],
-  "SelectedNode": "\\backend\\PharmacyApp.API\\appsettings.json",
   "PreviewInSolutionExplorer": false
 }

@@ -12,6 +12,7 @@
           "Microsoft.EntityFrameworkCore.Design": "9.0.10",
           "Microsoft.EntityFrameworkCore.InMemory": "9.0.10",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "9.0.4",
+          "PharmacyApp.Application": "1.0.0",
           "PharmacyApp.Core": "1.0.0",
           "PharmacyApp.Infrastructure": "1.0.0",
           "Swashbuckle.AspNetCore": "6.5.0"
@@ -1379,6 +1380,18 @@
           }
         }
       },
+      "PharmacyApp.Application/1.0.0": {
+        "dependencies": {
+          "PharmacyApp.Core": "1.0.0",
+          "PharmacyApp.Infrastructure": "1.0.0"
+        },
+        "runtime": {
+          "PharmacyApp.Application.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
       "PharmacyApp.Core/1.0.0": {
         "runtime": {
           "PharmacyApp.Core.dll": {
@@ -2111,6 +2124,11 @@
       "sha512": "sha512-IXoJOXIqc39AIe+CIR7koBtRGMiCt/LPM3lI+PELtDIy9XdyeSrwXFdWV9dzJ2Awl0paLWUaknLxFQ5HpHZUog==",
       "path": "system.windows.extensions/6.0.0",
       "hashPath": "system.windows.extensions.6.0.0.nupkg.sha512"
+    },
+    "PharmacyApp.Application/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
     },
     "PharmacyApp.Core/1.0.0": {
       "type": "project",

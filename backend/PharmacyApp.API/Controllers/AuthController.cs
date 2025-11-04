@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PharmacyApp.Core.Entities;
-using PharmacyApp.Core.Interfaces;
-using PharmacyApp.Application.Interfaces;
+using PharmacyApp.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace PharmacyApp.API.Controllers
 {
@@ -9,76 +11,109 @@ namespace PharmacyApp.API.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly IAuthService _authService;
+        private readonly PharmacyDbContext _context;
 
-        public AuthController(IAuthService authService)
+        public AuthController(PharmacyDbContext context)
         {
-            _authService = authService;
+            _context = context;
         }
 
-        // ✅ Register endpoint
+        // ✅ REGISTER
         [HttpPost("register")]
-        public IActionResult Register([FromBody] User user)
+        public async Task<IActionResult> Register([FromBody] User user)
         {
-            if (user == null)
-                return BadRequest(new { message = "Invalid user data." });
+            if (user == null || string.IsNullOrEmpty(user.Username) || string.IsNullOrEmpty(user.PasswordHash))
+                return BadRequest(new { message = "Invalid registration data." });
 
-            var existingUser = _authService.GetUserByUsername(user.Username);
-            if (existingUser != null)
+            // Check if username already exists
+            if (await _context.Users.AnyAsync(u => u.Username == user.Username))
                 return Conflict(new { message = "Username already exists. Please choose another one." });
 
-            var newUser = _authService.Register(user);
-            if (newUser == null)
-                return StatusCode(500, new { message = "User registration failed." });
+            // Hash password before saving
+            user.PasswordHash = HashPassword(user.PasswordHash);
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Registration successful!", user = newUser });
+            return Ok(new { message = "Registration successful!", user = new { user.Id, user.Username, user.Role } });
         }
 
-        // ✅ Login endpoint
+        // ✅ LOGIN
         [HttpPost("login")]
-        public IActionResult Login([FromBody] User user)
+        public async Task<IActionResult> Login([FromBody] User user)
         {
             if (user == null)
-                return BadRequest(new { message = "Invalid user data." });
+                return BadRequest(new { message = "Invalid login data." });
 
-            var loggedUser = _authService.Login(user.Username, user.PasswordHash);
-            if (loggedUser == null)
+            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Username == user.Username);
+            if (existingUser == null)
                 return Unauthorized(new { message = "Invalid username or password." });
 
-            return Ok(new { message = "Login successful!", user = loggedUser });
+            if (!VerifyPassword(user.PasswordHash, existingUser.PasswordHash))
+                return Unauthorized(new { message = "Invalid username or password." });
+
+            return Ok(new
+            {
+                message = "Login successful!",
+                user = new
+                {
+                    existingUser.Id,
+                    existingUser.Username,
+                    existingUser.Role
+                }
+            });
         }
 
-        // ✅ Delete user endpoint
+        // ✅ DELETE USER
         [HttpDelete("{id}")]
-        public IActionResult DeleteUser(int id)
+        public async Task<IActionResult> DeleteUser(int id)
         {
-            var existingUser = _authService.GetUserById(id);
-            if (existingUser == null)
-                return NotFound(new { message = $"User with ID {id} not found." });
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+                return NotFound(new { message = "User not found." });
 
-            _authService.DeleteUser(id);
-            return Ok(new { message = $"User with ID {id} has been deleted successfully." });
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = $"User with ID {id} deleted successfully." });
         }
-        // ✅ Update user endpoint
+
+        // ✅ UPDATE USER
         [HttpPut("{id}")]
-        public IActionResult UpdateUser(int id, [FromBody] UpdateUserDto dto)
+        public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserDto dto)
         {
-            try
-            {
-                var updatedUser = _authService.UpdateUser(id, dto.NewUsername, dto.NewPassword);
-                return Ok(updatedUser);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+                return NotFound(new { message = "User not found." });
+
+            if (!string.IsNullOrEmpty(dto.NewUsername))
+                user.Username = dto.NewUsername;
+
+            if (!string.IsNullOrEmpty(dto.NewPassword))
+                user.PasswordHash = HashPassword(dto.NewPassword);
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "User updated successfully.", user });
         }
 
+        // 🔒 Simple password hashing
+        private string HashPassword(string password)
+        {
+            using var sha256 = SHA256.Create();
+            var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+            return Convert.ToBase64String(bytes);
+        }
+
+        private bool VerifyPassword(string inputPassword, string storedHash)
+        {
+            var hash = HashPassword(inputPassword);
+            return hash == storedHash;
+        }
+
+        // DTO
         public class UpdateUserDto
         {
             public string? NewUsername { get; set; }
             public string? NewPassword { get; set; }
         }
-
     }
 }

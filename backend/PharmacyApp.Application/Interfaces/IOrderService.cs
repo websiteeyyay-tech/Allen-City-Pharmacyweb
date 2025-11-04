@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using PharmacyApp.Core.Entities;
 
-namespace PharmacyApp.Core.Interfaces
+namespace PharmacyApp.Application.Interfaces
 {
     public interface IOrderService
     {
