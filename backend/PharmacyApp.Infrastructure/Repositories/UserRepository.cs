@@ -32,7 +32,10 @@ namespace PharmacyApp.Infrastructure.Repositories
             => _context.Users.Update(user);
 
         public async Task DeleteAsync(User user)
-            => _context.Users.Remove(user);
+{
+    _context.Users.Remove(user);
+    await _context.SaveChangesAsync();
+}
 
         public async Task SaveChangesAsync()
             => await _context.SaveChangesAsync();

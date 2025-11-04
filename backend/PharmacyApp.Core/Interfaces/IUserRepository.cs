@@ -6,7 +6,6 @@ namespace PharmacyApp.Core.Interfaces
 {
     public interface IUserRepository
     {
-        // 🔍 Basic CRUD
         Task<IEnumerable<User>> GetAllAsync();
         Task<User?> GetByIdAsync(int id);
         Task<User?> GetByUsernameAsync(string username);
