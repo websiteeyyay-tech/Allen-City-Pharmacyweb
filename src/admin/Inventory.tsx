@@ -1,5 +1,5 @@
 // src/pages/admin/Inventory.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Package,
@@ -11,6 +11,7 @@ import {
   Trash2,
   Search,
 } from "lucide-react";
+import axios from "axios";
 
 interface InventoryItem {
   id: number;
@@ -20,6 +21,11 @@ interface InventoryItem {
   status: string;
 }
 
+const api = axios.create({
+  baseURL: "http://127.0.0.1:5272/api",
+  headers: { "Content-Type": "application/json" },
+});
+
 const Inventory: React.FC = () => {
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -28,31 +34,67 @@ const Inventory: React.FC = () => {
   const [form, setForm] = useState({ name: "", category: "", quantity: "" });
   const [search, setSearch] = useState("");
 
-  const handleAddItem = (e: React.FormEvent) => {
+  // ✅ Fetch products from backend
+  useEffect(() => {
+    const fetchInventory = async () => {
+      try {
+        const res = await api.get("/Products");
+        const data = res.data.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          category: p.category || "General",
+          quantity: p.stock || 0,
+          status: (p.stock || 0) < 10 ? "Low Stock" : "In Stock",
+        }));
+        setInventoryItems(data);
+      } catch (err) {
+        console.error("Error fetching inventory:", err);
+      }
+    };
+    fetchInventory();
+  }, []);
+
+  // ✅ Add or update item
+  const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.category || !form.quantity) return;
 
-    const newItem: InventoryItem = {
-      id: Date.now(),
+    const newItem = {
       name: form.name,
       category: form.category,
-      quantity: parseInt(form.quantity),
-      status: parseInt(form.quantity) < 10 ? "Low Stock" : "In Stock",
+      stock: parseInt(form.quantity),
     };
 
-    if (selectedItem) {
-      setInventoryItems((prev) =>
-        prev.map((item) => (item.id === selectedItem.id ? newItem : item))
-      );
-      setSelectedItem(null);
-    } else {
-      setInventoryItems([...inventoryItems, newItem]);
-    }
+    try {
+      if (selectedItem) {
+        // Update existing item
+        await api.put(`/Products/${selectedItem.id}`, newItem);
+      } else {
+        // Add new product
+        await api.post("/Products", newItem);
+      }
 
-    setForm({ name: "", category: "", quantity: "" });
-    setIsModalOpen(false);
+      // Refresh after save
+      const res = await api.get("/Products");
+      const data = res.data.map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        category: p.category || "General",
+        quantity: p.stock || 0,
+        status: (p.stock || 0) < 10 ? "Low Stock" : "In Stock",
+      }));
+      setInventoryItems(data);
+
+      // Reset form
+      setForm({ name: "", category: "", quantity: "" });
+      setSelectedItem(null);
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error("Error saving product:", err);
+    }
   };
 
+  // ✅ Edit item
   const handleEdit = (item: InventoryItem) => {
     setSelectedItem(item);
     setForm({
@@ -63,19 +105,26 @@ const Inventory: React.FC = () => {
     setIsModalOpen(true);
   };
 
+  // ✅ Delete item
   const handleDelete = (item: InventoryItem) => {
     setSelectedItem(item);
     setIsDeleteOpen(true);
   };
 
-  const confirmDelete = () => {
-    if (selectedItem) {
-      setInventoryItems(inventoryItems.filter((i) => i.id !== selectedItem.id));
-      setSelectedItem(null);
-      setIsDeleteOpen(false);
+  const confirmDelete = async () => {
+    try {
+      if (selectedItem) {
+        await api.delete(`/Products/${selectedItem.id}`);
+        setInventoryItems((prev) => prev.filter((i) => i.id !== selectedItem.id));
+        setSelectedItem(null);
+        setIsDeleteOpen(false);
+      }
+    } catch (err) {
+      console.error("Error deleting product:", err);
     }
   };
 
+  // ✅ Filter search
   const filteredItems = inventoryItems.filter(
     (item) =>
       item.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -131,7 +180,7 @@ const Inventory: React.FC = () => {
         </div>
       </div>
 
-      {/* Table Section */}
+      {/* Table */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -150,21 +199,11 @@ const Inventory: React.FC = () => {
             <table className="min-w-full border-collapse">
               <thead className="bg-gradient-to-r from-slate-100 to-slate-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Product
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Category
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Quantity
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Product</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Category</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Quantity</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -176,21 +215,16 @@ const Inventory: React.FC = () => {
                     transition={{ delay: i * 0.05 }}
                     className="hover:bg-blue-50 transition"
                   >
-                    <td className="px-6 py-4 font-medium text-gray-800">
-                      {item.name}
-                    </td>
+                    <td className="px-6 py-4 font-medium text-gray-800">{item.name}</td>
                     <td className="px-6 py-4 text-gray-600">{item.category}</td>
                     <td className="px-6 py-4 text-gray-600">{item.quantity}</td>
                     <td className="px-6 py-4">
                       {item.status === "Low Stock" ? (
                         <span className="flex items-center text-red-500 font-medium text-sm">
-                          <AlertTriangle className="w-4 h-4 mr-1" />
-                          Low Stock
+                          <AlertTriangle className="w-4 h-4 mr-1" /> Low Stock
                         </span>
                       ) : (
-                        <span className="text-green-600 font-medium text-sm">
-                          In Stock
-                        </span>
+                        <span className="text-green-600 font-medium text-sm">In Stock</span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-center space-x-3">
@@ -217,7 +251,7 @@ const Inventory: React.FC = () => {
         )}
       </motion.div>
 
-      {/* Add/Edit Modal */}
+      {/* Modals */}
       <AnimatePresence>
         {isModalOpen && (
           <motion.div
@@ -278,7 +312,6 @@ const Inventory: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {isDeleteOpen && (
           <motion.div

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PharmacyApp.Core.Entities;
 using PharmacyApp.Core.Interfaces;
+using PharmacyApp.Application.Interfaces;
 
 namespace PharmacyApp.API.Controllers
 {

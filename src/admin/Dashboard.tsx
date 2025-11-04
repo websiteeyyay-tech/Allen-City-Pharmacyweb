@@ -1,4 +1,3 @@
-// src/admin/Dashboard.tsx
 import React, { useEffect, useState } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import {
@@ -22,21 +21,61 @@ import {
 } from "lucide-react";
 
 const Dashboard: React.FC = () => {
-  const [stats] = useState({
-    totalSales: 12500,
-    totalOrders: 420,
-    totalUsers: 210,
-    lowStock: 8,
+  const [stats, setStats] = useState({
+    totalSales: 0,
+    totalOrders: 0,
+    totalUsers: 0,
+    lowStock: 0,
   });
 
-  const salesData = [
-    { month: "Jan", sales: 2000, orders: 120 },
-    { month: "Feb", sales: 1800, orders: 100 },
-    { month: "Mar", sales: 2200, orders: 140 },
-    { month: "Apr", sales: 2600, orders: 160 },
-    { month: "May", sales: 2300, orders: 150 },
-    { month: "Jun", sales: 3000, orders: 190 },
-  ];
+  const [salesData, setSalesData] = useState<
+    { month: string; sales: number; orders: number }[]
+  >([]);
+
+  // ✅ Fetch real data from backend
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const response = await fetch("http://127.0.0.1:5272/api/AdminDashboard");
+        if (!response.ok) throw new Error("Failed to load dashboard data");
+        const data = await response.json();
+
+        setStats({
+          totalSales: data.totalSales,
+          totalOrders: data.totalOrders,
+          totalUsers: data.totalUsers,
+          lowStock: data.lowStock,
+        });
+
+        const monthNames = [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+        ];
+
+        setSalesData(
+          (data.recentSales || []).map((m: any) => ({
+            month: monthNames[m.month - 1],
+            sales: m.sales,
+            orders: m.orders,
+          }))
+        );
+      } catch (err) {
+        console.error("Error loading dashboard:", err);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
 
   // ✅ Smooth animated counter using motion values
   const CountUp = ({ value, prefix = "" }: { value: number; prefix?: string }) => {

@@ -1,5 +1,15 @@
 import { useState, useEffect, useRef } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
+import {
+  FaChartLine,
+  FaBoxes,
+  FaUsers,
+  FaClipboardList,
+  FaCog,
+  FaBell,
+  FaQuestionCircle,
+  FaHome,
+} from "react-icons/fa";
 
 // 🧭 Pages (Public)
 import LoginPage from "./pages/LoginPage";
@@ -15,15 +25,18 @@ import AboutPage from "./pages/AboutPage";
 import EditProfilePage from "./pages/EditProfilePage";
 import AddressPage from "./pages/AddressPage";
 
-
 // 🧑‍💼 Admin Pages
 import Dashboard from "./admin/Dashboard";
 import Inventory from "./admin/Inventory";
 import Orders from "./admin/Orders";
-import Products from "./admin/Products";
 import Reports from "./admin/Reports";
 import Settings from "./admin/Settings";
 import Users from "./admin/Users";
+
+// 💊 Pharmacist Pages
+import PharmacistLayout from "./pharmacist/PharmacistLayout";
+import MedicinesPage from "./pharmacist/MedicinesPage";
+import PharmacistMedicines from "./pharmacist/PharmacistMedicines";
 
 // 🧩 Components
 import Navbar from "./components/Navbar";
@@ -32,21 +45,111 @@ import Footer from "./components/Footer";
 import CartPanel from "./components/CartPanel";
 import ChatBot from "./components/ChatBot";
 
+/* -------------------------------------
+ 🧱 ADMIN LAYOUT (Sidebar + Protected)
+-------------------------------------- */
+const AdminLayout = () => {
+  const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+
+  useEffect(() => {
+    if (!user || user.role?.toLowerCase() !== "admin") {
+      navigate("/");
+    }
+  }, [user, navigate]);
+
+  const menuItems = [
+    { name: "Dashboard", icon: <FaHome />, path: "/admin/dashboard" },
+    { name: "Inventory", icon: <FaBoxes />, path: "/admin/inventory" },
+    { name: "Orders", icon: <FaClipboardList />, path: "/admin/orders" },
+    { name: "Reports", icon: <FaChartLine />, path: "/admin/reports" },
+    { name: "Products", icon: <FaBoxes />, path: "/admin/products" },
+    { name: "Users", icon: <FaUsers />, path: "/admin/users" },
+    { name: "Settings", icon: <FaCog />, path: "/admin/settings" },
+  ];
+
+  return (
+    <div className="flex h-screen bg-gray-50">
+      {/* SIDEBAR */}
+      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col p-4 shadow-sm">
+        <div className="flex items-center mb-6">
+          <img src="/logo192.png" alt="Logo" className="w-8 h-8 mr-2 rounded-md" />
+          <h1 className="text-xl font-semibold text-gray-800">Admin Panel</h1>
+        </div>
+
+        <input
+          type="text"
+          placeholder="Search..."
+          className="w-full p-2 mb-4 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+        />
+
+        <nav className="flex-1 space-y-1">
+          {menuItems.map((item) => (
+            <NavLink
+              key={item.name}
+              to={item.path}
+              className={({ isActive }) =>
+                `flex items-center px-3 py-2 rounded-lg text-sm font-medium transition ${
+                  isActive
+                    ? "bg-green-100 text-green-700"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`
+              }
+            >
+              <span className="text-lg mr-3">{item.icon}</span>
+              <span>{item.name}</span>
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="border-t mt-4 pt-3 text-sm text-gray-600 space-y-2">
+          <button className="flex items-center w-full px-3 py-2 rounded-lg hover:bg-gray-100">
+            <FaQuestionCircle className="mr-2" /> Help Center
+          </button>
+          <button className="flex items-center w-full px-3 py-2 rounded-lg hover:bg-gray-100">
+            <FaBell className="mr-2 text-red-500" /> Notifications
+            <span className="ml-auto text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">
+              3
+            </span>
+          </button>
+
+          <div className="flex items-center mt-3 px-3 py-2 bg-gray-100 rounded-lg">
+            <img
+              src="https://i.pravatar.cc/100"
+              alt="Profile"
+              className="w-8 h-8 rounded-full mr-2"
+            />
+            <div>
+              <p className="text-sm font-medium">{user?.username || "Admin"}</p>
+              <p className="text-xs text-gray-500">Administrator</p>
+            </div>
+          </div>
+
+          <div className="mt-3 text-center text-xs text-gray-400">
+            © 2025 Allen City Pharmacy
+          </div>
+        </div>
+      </aside>
+
+      {/* MAIN */}
+      <main className="flex-1 overflow-y-auto p-6">
+        <Outlet />
+      </main>
+    </div>
+  );
+};
+
+/* -------------------------------------
+ 🌐 MAIN APP COMPONENT
+-------------------------------------- */
 function App() {
-  // 🛒 CART STATE
   const [cart, setCart] = useState<any[]>([]);
   const [cartCount, setCartCount] = useState(0);
-
-  // 🎁 PROMO BAR
   const [promoVisible, setPromoVisible] = useState(true);
-
-  // 🧺 CART PANEL VISIBILITY
   const [isCartOpen, setIsCartOpen] = useState(false);
-
-  // 🪟 Reference to detect outside clicks
   const cartRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
 
-  // 🔁 Load cart from localStorage on mount
   useEffect(() => {
     const storedCart = localStorage.getItem("cart");
     if (storedCart) {
@@ -56,7 +159,6 @@ function App() {
     }
   }, []);
 
-  // 🔄 Sync cart between tabs
   useEffect(() => {
     const syncCart = () => {
       const stored = localStorage.getItem("cart");
@@ -66,19 +168,16 @@ function App() {
     return () => window.removeEventListener("storage", syncCart);
   }, []);
 
-  // 💾 Save cart to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(cart));
     updateCartCount(cart);
   }, [cart]);
 
-  // 🧠 Update total item count
   const updateCartCount = (cartItems: any[]) => {
-    const total = cartItems.reduce((sum, item) => sum + item.qty, 0);
+    const total = cartItems.reduce((sum, item) => sum + (item.qty || 0), 0);
     setCartCount(total);
   };
 
-  // ➕ Add item to cart
   const addToCart = (product: any) => {
     const existing = cart.find((item) => item.id === product.id);
     if (existing) {
@@ -92,7 +191,6 @@ function App() {
     }
   };
 
-  // 🔢 Update quantity
   const setQty = (productId: number, qty: number) => {
     if (qty <= 0) {
       removeFromCart(productId);
@@ -103,17 +201,12 @@ function App() {
     );
   };
 
-  // ❌ Remove from cart
   const removeFromCart = (productId: number) => {
     setCart((prev) => prev.filter((item) => item.id !== productId));
   };
 
-  // 🧹 Clear entire cart
-  const clearCart = () => {
-    setCart([]);
-  };
+  const clearCart = () => setCart([]);
 
-  // 👇 Auto-close cart panel when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -136,14 +229,15 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col">
-
-      {/* ✅ Navbar with cart toggle */}
-      <Navbar
-        cartCount={cartCount}
-        onCartClick={() => setIsCartOpen((prev) => !prev)}
-      />
-
-      <PromoBar visible={promoVisible} onClose={() => setPromoVisible(false)} />
+      {!location.pathname.startsWith("/admin") && !location.pathname.startsWith("/pharmacist") && (
+        <>
+          <Navbar
+            cartCount={cartCount}
+            onCartClick={() => setIsCartOpen((prev) => !prev)}
+          />
+          <PromoBar visible={promoVisible} onClose={() => setPromoVisible(false)} />
+        </>
+      )}
 
       <main className="flex-1">
         <Routes>
@@ -171,40 +265,47 @@ function App() {
           <Route path="/edit-profile" element={<EditProfilePage />} />
           <Route path="/address" element={<AddressPage />} />
 
-
-
           {/* 🧑‍💼 Admin Routes */}
-          <Route path="/admin/dashboard" element={<Dashboard />} />
-          <Route path="/admin/inventory" element={<Inventory />} />
-          <Route path="/admin/orders" element={<Orders />} />
-          <Route path="/admin/products" element={<Products />} />
-          <Route path="/admin/reports" element={<Reports />} />
-          <Route path="/admin/settings" element={<Settings />} />
-          <Route path="/admin/users" element={<Users />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="inventory" element={<Inventory />} />
+            <Route path="orders" element={<Orders />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="users" element={<Users />} />
+          </Route>
 
-          {/* Fallback route → HomePage */}
+          {/* 💊 Pharmacist Routes */}
+          <Route path="/pharmacist" element={<PharmacistLayout />}>
+            <Route path="medicines" element={<MedicinesPage />} />
+            <Route path="pharmacist-medicines" element={<PharmacistMedicines />} />
+          </Route>
+
           <Route path="*" element={<HomePage />} />
         </Routes>
       </main>
 
-      <Footer />
+      {!location.pathname.startsWith("/admin") &&
+        !location.pathname.startsWith("/pharmacist") && <Footer />}
 
-      {/* 🛒 Cart panel (desktop only) */}
-      {isCartOpen && (
-        <div
-          ref={cartRef}
-          className="fixed right-6 top-24 z-50 hidden md:block animate-slide-in"
-        >
-          <CartPanel
-            cart={cart}
-            setQty={setQty}
-            removeFromCart={removeFromCart}
-            clearCart={clearCart}
-          />
-        </div>
-      )}
+      {isCartOpen &&
+        !location.pathname.startsWith("/admin") &&
+        !location.pathname.startsWith("/pharmacist") && (
+          <div
+            ref={cartRef}
+            className="fixed right-6 top-24 z-50 hidden md:block animate-slide-in"
+          >
+            <CartPanel
+              cart={cart}
+              setQty={setQty}
+              removeFromCart={removeFromCart}
+              clearCart={clearCart}
+            />
+          </div>
+        )}
 
-      <ChatBot />
+      {!location.pathname.startsWith("/admin") &&
+        !location.pathname.startsWith("/pharmacist") && <ChatBot />}
     </div>
   );
 }

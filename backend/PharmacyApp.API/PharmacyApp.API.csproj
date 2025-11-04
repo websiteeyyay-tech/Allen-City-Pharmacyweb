@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\PharmacyApp.Core\PharmacyApp.Core.csproj" />
     <ProjectReference Include="..\PharmacyApp.Infrastructure\PharmacyApp.Infrastructure.csproj" />
+    <ProjectReference Include="..\PharmacyApp.Application\PharmacyApp.Application.csproj" />
   </ItemGroup>
 
 </Project>

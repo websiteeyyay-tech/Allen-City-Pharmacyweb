@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Camera,
   Pill,
@@ -19,7 +19,7 @@ const OrderPage: React.FC = () => {
   const [step, setStep] = useState<
     "choose" | "upload" | "status" | "transfer" | "immunization" | "refill"
   >("choose");
-
+const navigate = useNavigate();
   const [prescriptionNumber, setPrescriptionNumber] = useState("");
   // Removed unused orderStatus state
   const [transferData, setTransferData] = useState({
@@ -28,7 +28,12 @@ const OrderPage: React.FC = () => {
     rxNumber: "",
   });
   const [showConfirm, setShowConfirm] = useState(false);
-
+useEffect(() => {
+    const user = localStorage.getItem("user"); // Or localStorage.getItem("token")
+    if (!user) {
+      navigate("/login");
+    }
+  }, [navigate]);
   // ✅ Floating icons animation
   useEffect(() => {
     const icons = document.querySelectorAll(".float-icon");

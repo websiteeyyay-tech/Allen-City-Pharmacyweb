@@ -1,5 +1,5 @@
 // src/pages/admin/Settings.tsx
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Settings as SettingsIcon,
@@ -11,14 +11,44 @@ import {
   Sun,
   CheckCircle2,
   Upload,
+  LogOut,
 } from "lucide-react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+
+const api = axios.create({
+  baseURL: "http://127.0.0.1:5272/api",
+  headers: { "Content-Type": "application/json" },
+});
 
 const Settings: React.FC = () => {
+  const navigate = useNavigate();
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const [showToast, setShowToast] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [name, setName] = useState("Admin Name");
+  const [email, setEmail] = useState("admin@email.com");
+  const [password, setPassword] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Load saved settings on mount
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await api.get("/settings/1"); // Example: userId = 1
+        const data = res.data;
+        setDarkMode(data.darkMode ?? false);
+        setNotifications(data.notifications ?? true);
+        setName(data.name ?? "Admin Name");
+        setEmail(data.email ?? "admin@email.com");
+        setProfileImage(data.profileImage ?? null);
+      } catch (err) {
+        console.error("Failed to fetch settings:", err);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -28,9 +58,27 @@ const Settings: React.FC = () => {
     }
   };
 
-  const handleSave = () => {
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 2500);
+  const handleSave = async () => {
+    try {
+      await api.post("/settings", {
+        name,
+        email,
+        password,
+        darkMode,
+        notifications,
+        profileImage,
+      });
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2500);
+    } catch (error) {
+      console.error("Error saving settings:", error);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    navigate("/login");
   };
 
   return (
@@ -63,15 +111,28 @@ const Settings: React.FC = () => {
             System Settings
           </h1>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleSave}
-          className="flex items-center bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 rounded-xl shadow-lg transition-all"
-        >
-          <Save className="w-5 h-5 mr-2" />
-          Save Changes
-        </motion.button>
+        <div className="flex space-x-3">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleSave}
+            className="flex items-center bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 rounded-xl shadow-lg transition-all"
+          >
+            <Save className="w-5 h-5 mr-2" />
+            Save Changes
+          </motion.button>
+
+          {/* Logout Button */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleLogout}
+            className="flex items-center bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white px-4 py-2 rounded-xl shadow-lg transition-all"
+          >
+            <LogOut className="w-5 h-5 mr-2" />
+            Logout
+          </motion.button>
+        </div>
       </motion.div>
 
       {/* Settings Grid */}
@@ -128,30 +189,66 @@ const Settings: React.FC = () => {
 
           {/* Profile Inputs */}
           <div className="space-y-4 mt-4">
-            {[
-              { label: "Name", type: "text", placeholder: "Admin Name" },
-              { label: "Email", type: "email", placeholder: "admin@email.com" },
-              { label: "Password", type: "password", placeholder: "********" },
-            ].map((field, i) => (
-              <div key={i}>
-                <label
-                  className={`block text-sm font-medium mb-1 ${
-                    darkMode ? "text-gray-300" : "text-gray-600"
-                  }`}
-                >
-                  {field.label}
-                </label>
-                <input
-                  type={field.type}
-                  placeholder={field.placeholder}
-                  className={`w-full rounded-xl p-2.5 border focus:ring-2 focus:outline-none ${
-                    darkMode
-                      ? "bg-gray-900 border-gray-700 text-gray-200 focus:ring-blue-500"
-                      : "bg-white border-gray-300 text-gray-800 focus:ring-blue-400"
-                  }`}
-                />
-              </div>
-            ))}
+            <div>
+              <label
+                className={`block text-sm font-medium mb-1 ${
+                  darkMode ? "text-gray-300" : "text-gray-600"
+                }`}
+              >
+                Name
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className={`w-full rounded-xl p-2.5 border focus:ring-2 focus:outline-none ${
+                  darkMode
+                    ? "bg-gray-900 border-gray-700 text-gray-200 focus:ring-blue-500"
+                    : "bg-white border-gray-300 text-gray-800 focus:ring-blue-400"
+                }`}
+              />
+            </div>
+
+            <div>
+              <label
+                className={`block text-sm font-medium mb-1 ${
+                  darkMode ? "text-gray-300" : "text-gray-600"
+                }`}
+              >
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={`w-full rounded-xl p-2.5 border focus:ring-2 focus:outline-none ${
+                  darkMode
+                    ? "bg-gray-900 border-gray-700 text-gray-200 focus:ring-blue-500"
+                    : "bg-white border-gray-300 text-gray-800 focus:ring-blue-400"
+                }`}
+              />
+            </div>
+
+            <div>
+              <label
+                className={`block text-sm font-medium mb-1 ${
+                  darkMode ? "text-gray-300" : "text-gray-600"
+                }`}
+              >
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="********"
+                className={`w-full rounded-xl p-2.5 border focus:ring-2 focus:outline-none ${
+                  darkMode
+                    ? "bg-gray-900 border-gray-700 text-gray-200 focus:ring-blue-500"
+                    : "bg-white border-gray-300 text-gray-800 focus:ring-blue-400"
+                }`}
+              />
+            </div>
           </div>
         </motion.div>
 
@@ -235,52 +332,6 @@ const Settings: React.FC = () => {
                 ></div>
               </button>
             </div>
-          </div>
-        </motion.div>
-
-        {/* Security Settings */}
-        <motion.div
-          className={`rounded-2xl shadow-lg p-6 space-y-4 lg:col-span-2 backdrop-blur-md ${
-            darkMode ? "bg-gray-800/60 border border-gray-700" : "bg-white/70"
-          }`}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <div className="flex items-center space-x-3">
-            <Shield
-              className={`w-6 h-6 ${
-                darkMode ? "text-red-400" : "text-red-500"
-              }`}
-            />
-            <h2
-              className={`text-lg font-semibold ${
-                darkMode ? "text-gray-100" : "text-gray-700"
-              }`}
-            >
-              Security Settings
-            </h2>
-          </div>
-
-          <div className="mt-3 space-y-3">
-            {[
-              "Two-factor Authentication",
-              "Login Alerts",
-              "Allow Passwordless Login via Email",
-            ].map((setting, i) => (
-              <label
-                key={i}
-                className={`flex items-center space-x-3 ${
-                  darkMode ? "text-gray-300" : "text-gray-700"
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-400"
-                />
-                <span>{setting}</span>
-              </label>
-            ))}
           </div>
         </motion.div>
       </div>

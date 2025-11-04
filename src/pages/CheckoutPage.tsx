@@ -4,6 +4,7 @@ import Mastercard from "../assets/Mastercard.png";
 import Amex from "../assets/amex.png";
 import Googleplay from "../assets/Googleplay.png";
 import Paypal from "../assets/Paypal.png";
+import { useNavigate } from "react-router-dom";
 
 export interface CartItem {
   id: number;
@@ -57,7 +58,13 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({
     () => cart.reduce((sum, it) => sum + it.price * it.qty, 0),
     [cart]
   );
-
+const navigate = useNavigate();
+useEffect(() => {
+    const user = localStorage.getItem("user"); // Or localStorage.getItem("token")
+    if (!user) {
+      navigate("/login");
+    }
+  }, [navigate]);
   useEffect(() => {
     const updateCart = () => {
       const storedCart = localStorage.getItem("cart");
