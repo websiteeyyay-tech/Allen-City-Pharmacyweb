@@ -1,18 +1,9 @@
 import { useState, useEffect, useRef } from "react";
-import { Routes, Route, NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
-import {
-  FaChartLine,
-  FaBoxes,
-  FaUsers,
-  FaClipboardList,
-  FaCog,
-  FaBell,
-  FaQuestionCircle,
-  FaHome,
-} from "react-icons/fa";
+import { Routes, Route, useLocation } from "react-router-dom";
 
-// 🧭 Pages (Public)
+// 🧭 Public Pages
 import LoginPage from "./pages/LoginPage";
+import SignUpPage from "./pages/SignUpPage";
 import HomePage from "./pages/HomePage";
 import ShopPage from "./pages/ShopPage";
 import OrderPage from "./pages/OrderPage";
@@ -26,6 +17,7 @@ import EditProfilePage from "./pages/EditProfilePage";
 import AddressPage from "./pages/AddressPage";
 
 // 🧑‍💼 Admin Pages
+import AdminLayout from "./admin/AdminLayout"; // ✅ imported layout
 import Dashboard from "./admin/Dashboard";
 import Inventory from "./admin/Inventory";
 import Orders from "./admin/Orders";
@@ -37,6 +29,9 @@ import Users from "./admin/Users";
 import PharmacistLayout from "./pharmacist/PharmacistLayout";
 import MedicinesPage from "./pharmacist/MedicinesPage";
 import PharmacistMedicines from "./pharmacist/PharmacistMedicines";
+import PharmacistInventory from "./pharmacist/PharmacistInventory";
+import PharmacistReports from "./pharmacist/PharmacistReports";
+import PharmacistSettings from "./pharmacist/PharmacistSettings";
 
 // 🧩 Components
 import Navbar from "./components/Navbar";
@@ -46,215 +41,73 @@ import CartPanel from "./components/CartPanel";
 import ChatBot from "./components/ChatBot";
 
 /* -------------------------------------
- 🧱 ADMIN LAYOUT (Sidebar + Protected)
--------------------------------------- */
-const AdminLayout = () => {
-  const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user") || "null");
-
-  useEffect(() => {
-    if (!user || user.role?.toLowerCase() !== "admin") {
-      navigate("/");
-    }
-  }, [user, navigate]);
-
-  const menuItems = [
-    { name: "Dashboard", icon: <FaHome />, path: "/admin/dashboard" },
-    { name: "Inventory", icon: <FaBoxes />, path: "/admin/inventory" },
-    { name: "Orders", icon: <FaClipboardList />, path: "/admin/orders" },
-    { name: "Reports", icon: <FaChartLine />, path: "/admin/reports" },
-    { name: "Products", icon: <FaBoxes />, path: "/admin/products" },
-    { name: "Users", icon: <FaUsers />, path: "/admin/users" },
-    { name: "Settings", icon: <FaCog />, path: "/admin/settings" },
-  ];
-
-  return (
-    <div className="flex h-screen bg-gray-50">
-      {/* SIDEBAR */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col p-4 shadow-sm">
-        <div className="flex items-center mb-6">
-          <img src="/logo192.png" alt="Logo" className="w-8 h-8 mr-2 rounded-md" />
-          <h1 className="text-xl font-semibold text-gray-800">Admin Panel</h1>
-        </div>
-
-        <input
-          type="text"
-          placeholder="Search..."
-          className="w-full p-2 mb-4 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-        />
-
-        <nav className="flex-1 space-y-1">
-          {menuItems.map((item) => (
-            <NavLink
-              key={item.name}
-              to={item.path}
-              className={({ isActive }) =>
-                `flex items-center px-3 py-2 rounded-lg text-sm font-medium transition ${
-                  isActive
-                    ? "bg-green-100 text-green-700"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`
-              }
-            >
-              <span className="text-lg mr-3">{item.icon}</span>
-              <span>{item.name}</span>
-            </NavLink>
-          ))}
-        </nav>
-
-        <div className="border-t mt-4 pt-3 text-sm text-gray-600 space-y-2">
-          <button className="flex items-center w-full px-3 py-2 rounded-lg hover:bg-gray-100">
-            <FaQuestionCircle className="mr-2" /> Help Center
-          </button>
-          <button className="flex items-center w-full px-3 py-2 rounded-lg hover:bg-gray-100">
-            <FaBell className="mr-2 text-red-500" /> Notifications
-            <span className="ml-auto text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">
-              3
-            </span>
-          </button>
-
-          <div className="flex items-center mt-3 px-3 py-2 bg-gray-100 rounded-lg">
-            <img
-              src="https://i.pravatar.cc/100"
-              alt="Profile"
-              className="w-8 h-8 rounded-full mr-2"
-            />
-            <div>
-              <p className="text-sm font-medium">{user?.username || "Admin"}</p>
-              <p className="text-xs text-gray-500">Administrator</p>
-            </div>
-          </div>
-
-          <div className="mt-3 text-center text-xs text-gray-400">
-            © 2025 Allen City Pharmacy
-          </div>
-        </div>
-      </aside>
-
-      {/* MAIN */}
-      <main className="flex-1 overflow-y-auto p-6">
-        <Outlet />
-      </main>
-    </div>
-  );
-};
-
-/* -------------------------------------
- 🌐 MAIN APP COMPONENT
+ 🌐 MAIN APP
 -------------------------------------- */
 function App() {
-  const [cart, setCart] = useState<any[]>([]);
+  const [cart, setCart] = useState<any[]>(() => JSON.parse(localStorage.getItem("cart") || "[]"));
   const [cartCount, setCartCount] = useState(0);
   const [promoVisible, setPromoVisible] = useState(true);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const cartRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
 
-  useEffect(() => {
-    const storedCart = localStorage.getItem("cart");
-    if (storedCart) {
-      const parsed = JSON.parse(storedCart);
-      setCart(parsed);
-      updateCartCount(parsed);
-    }
-  }, []);
+  const updateCartCount = (items: any[]) =>
+    setCartCount(items.reduce((sum, item) => sum + (item.qty || 0), 0));
 
-  useEffect(() => {
-    const syncCart = () => {
-      const stored = localStorage.getItem("cart");
-      setCart(stored ? JSON.parse(stored) : []);
-    };
-    window.addEventListener("storage", syncCart);
-    return () => window.removeEventListener("storage", syncCart);
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cart));
-    updateCartCount(cart);
-  }, [cart]);
-
-  const updateCartCount = (cartItems: any[]) => {
-    const total = cartItems.reduce((sum, item) => sum + (item.qty || 0), 0);
-    setCartCount(total);
-  };
+  useEffect(() => updateCartCount(cart), [cart]);
+  useEffect(() => localStorage.setItem("cart", JSON.stringify(cart)), [cart]);
 
   const addToCart = (product: any) => {
-    const existing = cart.find((item) => item.id === product.id);
-    if (existing) {
-      setCart((prev) =>
-        prev.map((item) =>
-          item.id === product.id ? { ...item, qty: item.qty + 1 } : item
-        )
-      );
-    } else {
-      setCart((prev) => [...prev, { ...product, qty: 1 }]);
-    }
+    setCart((prev) => {
+      const existing = prev.find((item) => item.id === product.id);
+      return existing
+        ? prev.map((item) =>
+            item.id === product.id ? { ...item, qty: item.qty + 1 } : item
+          )
+        : [...prev, { ...product, qty: 1 }];
+    });
   };
 
-  const setQty = (productId: number, qty: number) => {
-    if (qty <= 0) {
-      removeFromCart(productId);
-      return;
-    }
-    setCart((prev) =>
-      prev.map((item) => (item.id === productId ? { ...item, qty } : item))
-    );
-  };
-
-  const removeFromCart = (productId: number) => {
-    setCart((prev) => prev.filter((item) => item.id !== productId));
-  };
-
+  const removeFromCart = (id: number) => setCart((p) => p.filter((i) => i.id !== id));
   const clearCart = () => setCart([]);
+  const setQty = (id: number, qty: number) =>
+    qty <= 0 ? removeFromCart(id) : setCart((p) => p.map((i) => (i.id === id ? { ...i, qty } : i)));
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (e: MouseEvent) => {
       if (
         cartRef.current &&
-        !cartRef.current.contains(event.target as Node) &&
-        !(event.target as HTMLElement).closest(".cart-toggle-btn")
+        !cartRef.current.contains(e.target as Node) &&
+        !(e.target as HTMLElement).closest(".cart-toggle-btn")
       ) {
         setIsCartOpen(false);
       }
     };
-
-    if (isCartOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
-
+    document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isCartOpen]);
+  }, []);
+
+  const isAdmin = location.pathname.startsWith("/admin");
+  const isPharmacist = location.pathname.startsWith("/pharmacist");
 
   return (
     <div className="min-h-screen flex flex-col">
-      {!location.pathname.startsWith("/admin") && !location.pathname.startsWith("/pharmacist") && (
+      {!isAdmin && !isPharmacist && (
         <>
-          <Navbar
-            cartCount={cartCount}
-            onCartClick={() => setIsCartOpen((prev) => !prev)}
-          />
+          <Navbar cartCount={cartCount} onCartClick={() => setIsCartOpen((p) => !p)} />
           <PromoBar visible={promoVisible} onClose={() => setPromoVisible(false)} />
         </>
       )}
 
       <main className="flex-1">
         <Routes>
-          {/* 🌐 Public Site Routes */}
+          {/* 🌐 Public Routes */}
           <Route path="/" element={<HomePage />} />
           <Route path="/shop" element={<ShopPage onAdd={addToCart} />} />
           <Route path="/order" element={<OrderPage />} />
           <Route
             path="/checkout"
-            element={
-              <CheckoutPage
-                cart={cart}
-                setQty={setQty}
-                removeFromCart={removeFromCart}
-                clearCart={clearCart}
-              />
-            }
+            element={<CheckoutPage cart={cart} setQty={setQty} removeFromCart={removeFromCart} clearCart={clearCart} />}
           />
           <Route path="/thankyou" element={<ThankYouPage />} />
           <Route path="/contact" element={<ContactPage />} />
@@ -262,6 +115,7 @@ function App() {
           <Route path="/store-locator" element={<StoreLocatorPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignUpPage />} />
           <Route path="/edit-profile" element={<EditProfilePage />} />
           <Route path="/address" element={<AddressPage />} />
 
@@ -277,35 +131,25 @@ function App() {
 
           {/* 💊 Pharmacist Routes */}
           <Route path="/pharmacist" element={<PharmacistLayout />}>
+            <Route path="dashboard" element={<PharmacistMedicines />} />
+            <Route path="inventory" element={<PharmacistInventory />} />
             <Route path="medicines" element={<MedicinesPage />} />
+            <Route path="reports" element={<PharmacistReports />} />
             <Route path="pharmacist-medicines" element={<PharmacistMedicines />} />
+            <Route path="settings" element={<PharmacistSettings />} />
           </Route>
 
           <Route path="*" element={<HomePage />} />
         </Routes>
       </main>
 
-      {!location.pathname.startsWith("/admin") &&
-        !location.pathname.startsWith("/pharmacist") && <Footer />}
-
-      {isCartOpen &&
-        !location.pathname.startsWith("/admin") &&
-        !location.pathname.startsWith("/pharmacist") && (
-          <div
-            ref={cartRef}
-            className="fixed right-6 top-24 z-50 hidden md:block animate-slide-in"
-          >
-            <CartPanel
-              cart={cart}
-              setQty={setQty}
-              removeFromCart={removeFromCart}
-              clearCart={clearCart}
-            />
-          </div>
-        )}
-
-      {!location.pathname.startsWith("/admin") &&
-        !location.pathname.startsWith("/pharmacist") && <ChatBot />}
+      {!isAdmin && !isPharmacist && <Footer />}
+      {isCartOpen && !isAdmin && !isPharmacist && (
+        <div ref={cartRef} className="fixed right-6 top-24 z-50 hidden md:block animate-slide-in">
+          <CartPanel cart={cart} setQty={setQty} removeFromCart={removeFromCart} clearCart={clearCart} />
+        </div>
+      )}
+      {!isAdmin && !isPharmacist && <ChatBot />}
     </div>
   );
 }
