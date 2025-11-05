@@ -1,9 +1,16 @@
 {
   "ExpandedNodes": [
+    "",
     "\\backend",
+    "\\backend\\PharmacyApp.API",
     "\\backend\\PharmacyApp.API\\Controllers",
+    "\\backend\\PharmacyApp.Application",
+    "\\backend\\PharmacyApp.Core",
+    "\\backend\\PharmacyApp.Core\\Entities",
+    "\\backend\\PharmacyApp.Core\\Interfaces",
     "\\backend\\PharmacyApp.Infrastructure",
     "\\backend\\PharmacyApp.Infrastructure\\Data"
   ],
+  "SelectedNode": "\\backend\\PharmacyApp.API\\Controllers\\ReportsController.cs",
   "PreviewInSolutionExplorer": false
 }
