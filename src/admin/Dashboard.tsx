@@ -18,13 +18,22 @@ import {
   DollarSign,
   AlertTriangle,
   TrendingUp,
+  Boxes,
 } from "lucide-react";
+import axios from "axios";
+
+const api = axios.create({
+  baseURL: "http://127.0.0.1:5272/api",
+  headers: { "Content-Type": "application/json" },
+});
 
 const Dashboard: React.FC = () => {
   const [stats, setStats] = useState({
     totalSales: 0,
     totalOrders: 0,
     totalUsers: 0,
+    totalProducts: 0,
+    totalStockItems: 0,
     lowStock: 0,
   });
 
@@ -32,29 +41,49 @@ const Dashboard: React.FC = () => {
     { month: string; sales: number; orders: number }[]
   >([]);
 
-  // ✅ Fetch real data from /api/Products
+  // ✅ Fetch data from Users, Products, and Orders APIs
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const response = await fetch("http://127.0.0.1:5272/api/Products");
-        if (!response.ok) throw new Error("Failed to load product data");
-        const products = await response.json();
+        const [usersRes, productsRes, ordersRes] = await Promise.all([
+          api.get("/Users"),
+          api.get("/Products"),
+          api.get("/Orders"),
+        ]);
 
-        // 🔹 Calculate inventory-based metrics
-        const lowStockCount = products.filter((p: any) => p.stock < 10).length;
-        const totalValue = products.reduce(
-          (sum: number, p: any) => sum + p.stock * p.price,
+        const users = usersRes.data || [];
+        const products = productsRes.data || [];
+        const orders = ordersRes.data || [];
+
+        // ✅ Compute product stats
+        const totalUsers = users.length;
+        const totalProducts = products.length;
+        const totalStockItems = products.reduce(
+          (sum: number, p: any) => sum + (p.stock || 0),
+          0
+        );
+        const lowStockCount = products.filter(
+          (p: any) => p.stock !== undefined && p.stock < 10
+        ).length;
+
+        // ✅ Compute order stats
+        const totalOrders = orders.length;
+        const totalSales = orders.reduce(
+          (sum: number, order: any) =>
+            sum + (order.totalAmount || order.totalPrice || 0),
           0
         );
 
         setStats({
-          totalSales: totalValue, // Using total product value as sales proxy
-          totalOrders: Math.floor(totalValue / 1000), // Mocked number of orders
-          totalUsers: 120 + Math.floor(Math.random() * 50), // Placeholder for users
+          totalSales,
+          totalOrders,
+          totalUsers,
+          totalProducts,
+          totalStockItems,
           lowStock: lowStockCount,
         });
 
-        // 🔹 Generate mock monthly sales trend
+        // 🔹 Optional: Mock sales chart (could be replaced with backend data later)
         const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
         setSalesData(
           months.map((m) => ({
@@ -64,7 +93,7 @@ const Dashboard: React.FC = () => {
           }))
         );
       } catch (err) {
-        console.error("Error loading dashboard:", err);
+        console.error("Error fetching dashboard data:", err);
       }
     };
 
@@ -91,6 +120,7 @@ const Dashboard: React.FC = () => {
     );
   };
 
+  // ✅ Dashboard cards
   const cards = [
     {
       title: "Total Sales (₱)",
@@ -113,6 +143,18 @@ const Dashboard: React.FC = () => {
       gradient: "from-violet-100 via-violet-50 to-white",
     },
     {
+      title: "Total Products",
+      value: stats.totalProducts,
+      icon: <Package className="w-7 h-7 text-orange-500" />,
+      gradient: "from-orange-100 via-orange-50 to-white",
+    },
+    {
+      title: "Total Stock Items",
+      value: stats.totalStockItems,
+      icon: <Boxes className="w-7 h-7 text-teal-500" />,
+      gradient: "from-teal-100 via-teal-50 to-white",
+    },
+    {
       title: "Low Stock Items",
       value: stats.lowStock,
       icon: <AlertTriangle className="w-7 h-7 text-red-500" />,
@@ -131,12 +173,12 @@ const Dashboard: React.FC = () => {
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
         <h1 className="text-4xl font-extrabold tracking-tight">Admin Dashboard</h1>
         <p className="text-indigo-100 mt-2">
-          Live pharmacy insights powered by your backend database
+          Real-time pharmacy stats powered by your API
         </p>
       </motion.div>
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Stats cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
         {cards.map((card, index) => (
           <motion.div
             key={index}
@@ -163,7 +205,7 @@ const Dashboard: React.FC = () => {
         ))}
       </div>
 
-      {/* Charts Section */}
+      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-10">
         {/* Sales Chart */}
         <motion.div

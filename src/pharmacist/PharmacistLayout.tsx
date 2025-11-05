@@ -80,13 +80,6 @@ const PharmacistLayout = () => {
           <button className="flex items-center w-full px-3 py-2 rounded-lg hover:bg-gray-100">
             <FaQuestionCircle className="mr-2" /> Help Center
           </button>
-          <button className="flex items-center w-full px-3 py-2 rounded-lg hover:bg-gray-100">
-            <FaBell className="mr-2 text-red-500" /> Notifications
-            <span className="ml-auto text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">
-              3
-            </span>
-          </button>
-
           <button
             onClick={handleLogout}
             className="flex items-center w-full px-3 py-2 mt-2 rounded-lg hover:bg-gray-100 text-red-600"
