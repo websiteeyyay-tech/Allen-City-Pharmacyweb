@@ -104,8 +104,15 @@ const LoginPage: React.FC = () => {
 
       setToast({ message: `Welcome back, ${loggedUser.username}!`, type: "success" });
 
+      // ✅ Redirect by role
       setTimeout(() => {
-        window.location.href = loggedUser.role === "admin" ? "/admin/dashboard" : "/";
+        if (loggedUser.role === "admin") {
+          window.location.href = "/admin/dashboard";
+        } else if (loggedUser.role === "doctor") {
+          window.location.href = "/pharmacist/dashboard";
+        } else {
+          window.location.href = "/";
+        }
       }, 1200);
     } catch (error: any) {
       console.error("❌ Login error:", error);

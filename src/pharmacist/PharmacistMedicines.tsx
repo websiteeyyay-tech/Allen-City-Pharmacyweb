@@ -1,180 +1,224 @@
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import {
+  Package,
   ClipboardList,
-  PlusCircle,
-  XCircle,
-  Filter,
-  ChevronDown,
-  Clock,
+  AlertTriangle,
+  DollarSign,
+  TrendingUp,
 } from "lucide-react";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  LineChart,
+  Line,
+} from "recharts";
 
-interface Medicine {
-  id: string;
-  name: string;
-  brand?: string;
-  price: number;
-  stock: number;
-  category?: string;
-}
+const PharmacistDashboard: React.FC = () => {
+  const [stats, setStats] = useState({
+    totalMedicines: 0,
+    totalStock: 0,
+    lowStockItems: 0,
+    totalValue: 0,
+  });
 
-const PharmacistMedicines: React.FC = () => {
-  const [medicines, setMedicines] = useState<Medicine[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [chartData, setChartData] = useState<
+    { month: string; stockIn: number; stockOut: number }[]
+  >([]);
 
-  // Fetch medicines from backend
+  // ✅ Fetch Product Data
   useEffect(() => {
-    const fetchMedicines = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:5272/api/Medicines");
-        const data = await res.json();
-        setMedicines(data);
+        const res = await axios.get("http://127.0.0.1:5272/api/Products");
+        const products = res.data;
+
+        let totalMedicines = products.length;
+        let totalStock = 0;
+        let lowStockItems = 0;
+        let totalValue = 0;
+
+        products.forEach((p: any) => {
+          totalStock += p.stock || 0;
+          if (p.stock < 10) lowStockItems++;
+          totalValue += (p.price || 0) * (p.stock || 0);
+        });
+
+        // 🧮 Generate stock trend data (simulate monthly changes)
+        const months = [
+          "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+        ];
+        const generatedTrends = months.map((m) => ({
+          month: m,
+          stockIn: Math.floor(Math.random() * 300 + 50),
+          stockOut: Math.floor(Math.random() * 200 + 20),
+        }));
+
+        setStats({ totalMedicines, totalStock, lowStockItems, totalValue });
+        setChartData(generatedTrends);
       } catch (err) {
-        console.error("Error loading medicines:", err);
-      } finally {
-        setLoading(false);
+        console.error("Error fetching pharmacist dashboard data:", err);
       }
     };
-    fetchMedicines();
+
+    fetchData();
   }, []);
 
-  // Add new medicine (placeholder example)
-  const handleAddMedicine = async () => {
-    try {
-      const newMedicine = {
-        name: "New Medicine",
-        price: 0,
-        stock: 0,
-      };
+  // ✅ Smooth animated counter
+  const CountUp = ({ value, prefix = "" }: { value: number; prefix?: string }) => {
+    const count = useMotionValue(0);
+    const spring = useSpring(count, { stiffness: 100, damping: 15 });
+    const display = useTransform(spring, (val) =>
+      Math.floor(val).toLocaleString()
+    );
 
-      const res = await fetch("http://127.0.0.1:5272/api/Medicines", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newMedicine),
-      });
+    useEffect(() => {
+      count.set(value);
+    }, [value, count]);
 
-      if (res.ok) {
-        const data = await res.json();
-        alert("✅ " + data.message);
-        setMedicines((prev) => [...prev, data.medicine]);
-      } else {
-        console.error("Failed to add medicine:", res.statusText);
-      }
-    } catch (err) {
-      console.error("Error adding medicine:", err);
-    }
+    return (
+      <motion.span className="tabular-nums">
+        {prefix}
+        <motion.span>{display}</motion.span>
+      </motion.span>
+    );
   };
 
-  // Delete medicine
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this medicine?")) return;
-
-    try {
-      const res = await fetch(`http://127.0.0.1:5272/api/Medicines/${id}`, {
-        method: "DELETE",
-      });
-
-      if (res.ok) {
-        setMedicines((prev) => prev.filter((m) => m.id !== id));
-      } else {
-        console.error("Failed to delete medicine:", res.statusText);
-      }
-    } catch (err) {
-      console.error("Error deleting medicine:", err);
-    }
-  };
+  const cards = [
+    {
+      title: "Total Medicines",
+      value: stats.totalMedicines,
+      icon: <ClipboardList className="w-7 h-7 text-blue-500" />,
+      gradient: "from-blue-100 via-blue-50 to-white",
+    },
+    {
+      title: "Total Stock Units",
+      value: stats.totalStock,
+      icon: <Package className="w-7 h-7 text-purple-500" />,
+      gradient: "from-purple-100 via-purple-50 to-white",
+    },
+    {
+      title: "Low Stock Items",
+      value: stats.lowStockItems,
+      icon: <AlertTriangle className="w-7 h-7 text-red-500" />,
+      gradient: "from-rose-100 via-rose-50 to-white",
+    },
+    {
+      title: "Inventory Value",
+      value: stats.totalValue,
+      prefix: "₱",
+      icon: <DollarSign className="w-7 h-7 text-green-500" />,
+      gradient: "from-emerald-100 via-emerald-50 to-white",
+    },
+  ];
 
   return (
-    <div className="p-6 min-h-screen bg-gray-50">
+    <div className="p-8 min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-100">
       {/* Header */}
       <motion.div
-        className="bg-white rounded-2xl shadow-md p-6 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: -15 }}
         animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white p-8 rounded-3xl shadow-lg mb-10 relative overflow-hidden"
       >
-        <div className="flex items-center space-x-3">
-          <ClipboardList className="w-7 h-7 text-green-600" />
-          <h1 className="text-2xl font-bold text-gray-800">Medicines</h1>
-        </div>
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
+        <h1 className="text-4xl font-extrabold tracking-tight">
+          Pharmacist Dashboard
+        </h1>
+        <p className="text-emerald-100 mt-2">
+          Manage medicines and inventory in real-time
+        </p>
+      </motion.div>
 
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={handleAddMedicine}
-            className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700 transition"
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {cards.map((card, index) => (
+          <motion.div
+            key={index}
+            className={`relative rounded-3xl bg-gradient-to-br ${card.gradient} p-6 backdrop-blur-md shadow-lg border border-white/50 hover:shadow-2xl transition-all duration-200`}
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
           >
-            <PlusCircle className="w-5 h-5" />
-            <span>Add Medicine</span>
-          </button>
-          <button className="flex items-center space-x-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-xl hover:bg-gray-200 transition">
-            <Filter className="w-5 h-5" />
-            <span>Filter</span>
-            <ChevronDown className="w-4 h-4" />
-          </button>
-        </div>
-      </motion.div>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-gray-600 text-sm font-medium uppercase">
+                  {card.title}
+                </h2>
+                <p className="text-3xl font-bold mt-2 text-gray-800">
+                  <CountUp value={card.value} prefix={card.prefix} />
+                </p>
+              </div>
+              <div className="p-3 bg-white rounded-2xl shadow-inner">
+                {card.icon}
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
 
-      {/* Medicines Table */}
-      <motion.div
-        className="bg-white rounded-2xl shadow-md p-6"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.1 }}
-      >
-        {loading ? (
-          <div className="text-center py-16 text-gray-500">Loading medicines...</div>
-        ) : medicines.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="text-gray-600 border-b">
-                  <th className="py-3 px-4 font-semibold">ID</th>
-                  <th className="py-3 px-4 font-semibold">Name</th>
-                  <th className="py-3 px-4 font-semibold">Brand</th>
-                  <th className="py-3 px-4 font-semibold">Price</th>
-                  <th className="py-3 px-4 font-semibold">Stock</th>
-                  <th className="py-3 px-4 font-semibold">Category</th>
-                  <th className="py-3 px-4 font-semibold text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <AnimatePresence>
-                  {medicines.map((med, i) => (
-                    <motion.tr
-                      key={med.id}
-                      className={`border-b ${i % 2 === 0 ? "bg-gray-50" : "bg-white"} hover:bg-green-50 transition`}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                    >
-                      <td className="py-3 px-4 text-gray-800 font-medium">{med.id}</td>
-                      <td className="py-3 px-4 text-gray-700">{med.name}</td>
-                      <td className="py-3 px-4 text-gray-600">{med.brand || "—"}</td>
-                      <td className="py-3 px-4 text-gray-800">₱{med.price.toFixed(2)}</td>
-                      <td className="py-3 px-4 text-gray-800">{med.stock}</td>
-                      <td className="py-3 px-4 text-gray-600">{med.category || "—"}</td>
-                      <td className="py-3 px-4 text-center space-x-2">
-                        <button
-                          onClick={() => handleDelete(med.id)}
-                          className="text-red-500 hover:text-red-700 transition"
-                        >
-                          <XCircle className="w-5 h-5 inline" />
-                        </button>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </AnimatePresence>
-              </tbody>
-            </table>
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-10">
+        {/* Stock Added (Bar Chart) */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-white rounded-3xl shadow-lg p-6 border border-gray-100"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-700 flex items-center gap-2">
+              <Package className="text-indigo-500" /> Monthly Stock-In Overview
+            </h2>
           </div>
-        ) : (
-          <div className="text-center py-16 text-gray-500">
-            <Clock className="mx-auto mb-3 w-10 h-10 text-gray-400" />
-            <p>No medicines to display yet.</p>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f1f1" />
+              <XAxis dataKey="month" stroke="#6b7280" />
+              <YAxis stroke="#6b7280" />
+              <Tooltip />
+              <Bar dataKey="stockIn" fill="#10b981" radius={[10, 10, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </motion.div>
+
+        {/* Stock Usage (Line Chart) */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white rounded-3xl shadow-lg p-6 border border-gray-100"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-700 flex items-center gap-2">
+              <TrendingUp className="text-green-500" /> Monthly Stock-Out Trend
+            </h2>
           </div>
-        )}
-      </motion.div>
+          <ResponsiveContainer width="100%" height={280}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f1f1" />
+              <XAxis dataKey="month" stroke="#6b7280" />
+              <YAxis stroke="#6b7280" />
+              <Tooltip />
+              <Line
+                type="monotone"
+                dataKey="stockOut"
+                stroke="#3b82f6"
+                strokeWidth={3}
+                dot={{ r: 5, fill: "#3b82f6" }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </motion.div>
+      </div>
     </div>
   );
 };
 
-export default PharmacistMedicines;
+export default PharmacistDashboard;
