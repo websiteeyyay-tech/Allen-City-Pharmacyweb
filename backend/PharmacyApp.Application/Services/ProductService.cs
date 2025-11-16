@@ -27,17 +27,30 @@ namespace PharmacyApp.Application.Services
 
         public async Task<Product> CreateAsync(Product product)
         {
+            if (product == null)
+                throw new System.ArgumentNullException(nameof(product));
+
             return await _productRepository.AddAsync(product);
         }
 
         public async Task<Product> UpdateAsync(Product product)
         {
+            if (product == null)
+                throw new System.ArgumentNullException(nameof(product));
+
             return await _productRepository.UpdateAsync(product);
+        }
+
+        public async Task<Product?> GetProductByIdAsync(int id)
+        {
+            return await _productRepository.GetByIdAsync(id);
         }
 
         public async Task DeleteAsync(int id)
         {
-            await _productRepository.DeleteAsync(id);
+            var deleted = await _productRepository.DeleteAsync(id);
+            if (!deleted)
+                throw new KeyNotFoundException($"Product with ID {id} not found.");
         }
     }
 }

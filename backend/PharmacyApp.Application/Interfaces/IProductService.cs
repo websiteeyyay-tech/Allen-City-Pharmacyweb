@@ -11,5 +11,6 @@ namespace PharmacyApp.Application.Interfaces
         Task<Product> CreateAsync(Product product);
         Task<Product> UpdateAsync(Product product);
         Task DeleteAsync(int id);
+        Task<Product?> GetProductByIdAsync(int id);
     }
 }

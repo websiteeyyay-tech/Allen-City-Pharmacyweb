@@ -1,50 +1,42 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import {
-  FaBoxes,
-  FaClipboardList,
   FaHome,
-  FaSignOutAlt,
+  FaBoxes,
+  FaChartLine,
+  FaCog,
   FaBell,
   FaQuestionCircle,
+  FaSignOutAlt,
+  FaClipboardList,
 } from "react-icons/fa";
 import Logo from "../assets/AllanCityPharmacyLogo.png";
 
 const PharmacistLayout = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user") || "null");
-  const [openDropdown, setOpenDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Protect pharmacist/doctor access
+  // ✅ Protect pharmacist access
   useEffect(() => {
     if (!user || user.role?.toLowerCase() !== "doctor") {
-      navigate("/");
+      navigate("/"); // redirect non-pharmacists
     }
   }, [user, navigate]);
 
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpenDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  // ✅ Pharmacist menu items
+  const menuItems = [
+    { name: "Dashboard", icon: <FaHome />, path: "/pharmacist/dashboard" },
+    { name: "Inventory", icon: <FaBoxes />, path: "/pharmacist/inventory" },
+    { name: "Medicines", icon: <FaClipboardList />, path: "/pharmacist/medicines" },
+    { name: "Reports", icon: <FaChartLine />, path: "/pharmacist/reports" },
+    { name: "Settings", icon: <FaCog />, path: "/pharmacist/settings" },
+  ];
 
+  // ✅ Logout handler
   const handleLogout = () => {
     localStorage.removeItem("user");
     navigate("/login");
   };
-
-  // Menu items for pharmacist/doctor
-  const menuItems = [
-    { name: "Dashboard", icon: <FaHome />, path: "/pharmacist/dashboard" },
-    { name: "Medicines", icon: <FaBoxes />, path: "/pharmacist/medicines" },
-    { name: "Orders", icon: <FaClipboardList />, path: "/pharmacist/orders" },
-  ];
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -88,11 +80,11 @@ const PharmacistLayout = () => {
           <button className="flex items-center w-full px-3 py-2 rounded-lg hover:bg-gray-100">
             <FaQuestionCircle className="mr-2" /> Help Center
           </button>
-          <button className="flex items-center w-full px-3 py-2 rounded-lg hover:bg-gray-100">
-            <FaBell className="mr-2 text-red-500" /> Notifications
-            <span className="ml-auto text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">
-              3
-            </span>
+          <button
+            onClick={handleLogout}
+            className="flex items-center w-full px-3 py-2 mt-2 rounded-lg hover:bg-gray-100 text-red-600"
+          >
+            <FaSignOutAlt className="mr-2" /> Logout
           </button>
 
           <div className="mt-3 text-center text-xs text-gray-400">
@@ -102,48 +94,9 @@ const PharmacistLayout = () => {
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <div className="flex-1 flex flex-col">
-        {/* TOP NAVBAR */}
-        <header className="flex justify-between items-center bg-white border-b border-gray-200 px-6 py-3 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-700">
-            Welcome, {user?.username || "Pharmacist"}
-          </h2>
-
-          {/* Profile Dropdown */}
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setOpenDropdown((prev) => !prev)}
-              className="flex items-center focus:outline-none"
-            >
-              <img
-                src={user?.avatar || "https://i.pravatar.cc/100"}
-                alt="Profile"
-                className="w-9 h-9 rounded-full border-2 border-green-500"
-              />
-            </button>
-
-            {openDropdown && (
-              <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
-                <div className="px-4 py-2 text-sm text-gray-700 border-b">
-                  <p className="font-medium">{user?.username || "Pharmacist"}</p>
-                  <p className="text-xs text-gray-500">Pharmacist</p>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  <FaSignOutAlt className="mr-2" /> Logout
-                </button>
-              </div>
-            )}
-          </div>
-        </header>
-
-        {/* MAIN PAGE CONTENT */}
-        <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
-          <Outlet />
-        </main>
-      </div>
+      <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
+        <Outlet />
+      </main>
     </div>
   );
 };

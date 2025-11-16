@@ -6,10 +6,22 @@
     "jsx": "react-jsx",
     "strict": true,
     "esModuleInterop": true,
+<<<<<<< HEAD
     "skipLibCheck": true
   },
   "include": [
     "src",
     "src/vite-env.d.ts"
   ]
+=======
+    "allowSyntheticDefaultImports": true
+  }
+  {
+  "compilerOptions": {
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
+  }
+}
+
+>>>>>>> 3e6e73fd46f59ecdbbdbecf874688b93caa9d256
 }

@@ -1,62 +1,49 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { useEffect, useState, useRef } from "react";
+import { useEffect } from "react";
 import {
-  FaChartLine,
-  FaBoxes,
-  FaUsers,
-  FaClipboardList,
-  FaCog,
-  FaBell,
-  FaQuestionCircle,
   FaHome,
+  FaBoxes,
+  FaChartLine,
+  FaCog,
+  FaQuestionCircle,
   FaSignOutAlt,
+  FaClipboardList,
+  FaUsers,
 } from "react-icons/fa";
-import Logo from "../assets/AllanCityPharmacyLogo.png"; // ✅ correct path
+import Logo from "../assets/AllanCityPharmacyLogo.png";
 
 const AdminLayout = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user") || "null");
-  const [openDropdown, setOpenDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // ✅ Protect admin access
+  // ✅ Protect admin-only access
   useEffect(() => {
     if (!user || user.role?.toLowerCase() !== "admin") {
-      navigate("/");
+      navigate("/"); // redirect non-admin users
     }
   }, [user, navigate]);
 
-  // ✅ Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpenDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    navigate("/login");
-  };
-
+  // ✅ Admin menu items
   const menuItems = [
     { name: "Dashboard", icon: <FaHome />, path: "/admin/dashboard" },
     { name: "Inventory", icon: <FaBoxes />, path: "/admin/inventory" },
     { name: "Orders", icon: <FaClipboardList />, path: "/admin/orders" },
     { name: "Reports", icon: <FaChartLine />, path: "/admin/reports" },
-    { name: "Products", icon: <FaBoxes />, path: "/admin/products" },
     { name: "Users", icon: <FaUsers />, path: "/admin/users" },
     { name: "Settings", icon: <FaCog />, path: "/admin/settings" },
   ];
+
+  // ✅ Logout handler
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
 
   return (
     <div className="flex h-screen bg-gray-50">
       {/* SIDEBAR */}
       <aside className="w-64 bg-white border-r border-gray-200 flex flex-col p-4 shadow-sm">
-        {/* Brand */}
+        {/* Brand / Logo */}
         <div className="flex items-center mb-6">
           <img src={Logo} alt="Logo" className="w-8 h-8 mr-2 rounded-md" />
           <h1 className="text-xl font-semibold text-gray-800">Admin Panel</h1>
@@ -94,11 +81,13 @@ const AdminLayout = () => {
           <button className="flex items-center w-full px-3 py-2 rounded-lg hover:bg-gray-100">
             <FaQuestionCircle className="mr-2" /> Help Center
           </button>
-          <button className="flex items-center w-full px-3 py-2 rounded-lg hover:bg-gray-100">
-            <FaBell className="mr-2 text-red-500" /> Notifications
-            <span className="ml-auto text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">
-              3
-            </span>
+
+          {/* Logout */}
+          <button
+            onClick={handleLogout}
+            className="flex items-center w-full px-3 py-2 mt-2 rounded-lg hover:bg-gray-100 text-red-600"
+          >
+            <FaSignOutAlt className="mr-2" /> Logout
           </button>
 
           <div className="mt-3 text-center text-xs text-gray-400">
@@ -108,48 +97,9 @@ const AdminLayout = () => {
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <div className="flex-1 flex flex-col">
-        {/* ✅ TOP NAVBAR */}
-        <header className="flex justify-between items-center bg-white border-b border-gray-200 px-6 py-3 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-700">
-            Welcome, {user?.username || "Admin"}
-          </h2>
-
-          {/* Profile Dropdown */}
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setOpenDropdown((prev) => !prev)}
-              className="flex items-center focus:outline-none"
-            >
-              <img
-                src="https://i.pravatar.cc/100"
-                alt="Profile"
-                className="w-9 h-9 rounded-full border-2 border-green-500"
-              />
-            </button>
-
-            {openDropdown && (
-              <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
-                <div className="px-4 py-2 text-sm text-gray-700 border-b">
-                  <p className="font-medium">{user?.username || "Admin"}</p>
-                  <p className="text-xs text-gray-500">Administrator</p>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  <FaSignOutAlt className="mr-2" /> Logout
-                </button>
-              </div>
-            )}
-          </div>
-        </header>
-
-        {/* MAIN PAGE CONTENT */}
-        <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
-          <Outlet />
-        </main>
-      </div>
+      <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
+        <Outlet />
+      </main>
     </div>
   );
 };

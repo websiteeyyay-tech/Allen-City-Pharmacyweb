@@ -1,20 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users as UsersIcon, UserPlus, Search, Mail, X } from "lucide-react";
+import { Users as UsersIcon, UserPlus, Search, Lock, X } from "lucide-react";
 import axios from "axios";
 
-// ✅ Axios instance
 const api = axios.create({
-  baseURL: "http://127.0.0.1:5272/api", // adjust if backend runs on different port
+  baseURL: "http://127.0.0.1:5272/api",
   headers: { "Content-Type": "application/json" },
 });
 
 interface User {
   id: number;
-  name: string;
-  email: string;
+  username: string;
+  passwordhash?: string;
   role: string;
-  image?: string;
 }
 
 const Users: React.FC = () => {
@@ -22,32 +20,44 @@ const Users: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [newUser, setNewUser] = useState({
-    name: "",
-    email: "",
+    username: "",
+    passwordhash: "",
     role: "",
   });
 
-  // ✅ Fetch users from backend
+  // ✅ Fetch users
   const fetchUsers = async () => {
     try {
-      const res = await api.get("/users");
+      const res = await api.get("/Users");
       setUsers(res.data);
     } catch (err) {
       console.error("Error fetching users:", err);
+      alert("Failed to fetch users from database.");
     }
   };
 
-  // ✅ Add new user to backend
+  // ✅ Add user
   const handleAddUser = async () => {
-    if (!newUser.name || !newUser.email || !newUser.role) {
+    const { username, passwordhash, role } = newUser;
+
+    if (!username || !passwordhash || !role) {
       alert("Please fill in all fields.");
       return;
     }
+
     try {
-      await api.post("/users", newUser);
-      await fetchUsers();
-      setShowModal(false);
-      setNewUser({ name: "", email: "", role: "" });
+      const res = await api.post("/Users", {
+        id: 0,
+        username,
+        passwordhash,
+        role,
+      });
+
+      if (res.status === 200 || res.status === 201) {
+        await fetchUsers();
+        setShowModal(false);
+        setNewUser({ username: "", passwordhash: "", role: "" });
+      }
     } catch (err) {
       console.error("Error saving user:", err);
       alert("Failed to save user. Check console for details.");
@@ -59,7 +69,7 @@ const Users: React.FC = () => {
   }, []);
 
   const filteredUsers = users.filter((u) =>
-    u.name.toLowerCase().includes(search.toLowerCase())
+    u.username.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -96,7 +106,7 @@ const Users: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* User Table */}
+      {/* Table */}
       <motion.div
         className="bg-white rounded-2xl shadow p-6 overflow-x-auto"
         initial={{ opacity: 0, y: 15 }}
@@ -106,8 +116,7 @@ const Users: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="text-gray-600 border-b">
-                <th className="py-3 px-4 font-medium">Name</th>
-                <th className="py-3 px-4 font-medium">Email</th>
+                <th className="py-3 px-4 font-medium">Username</th>
                 <th className="py-3 px-4 font-medium">Role</th>
               </tr>
             </thead>
@@ -118,18 +127,8 @@ const Users: React.FC = () => {
                   className="hover:bg-teal-50 transition-all cursor-pointer border-b"
                   whileHover={{ scale: 1.01 }}
                 >
-                  <td className="py-3 px-4 font-medium text-gray-800 flex items-center gap-3">
-                    {user.image && (
-                      <img
-                        src={user.image}
-                        alt={user.name}
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
-                    )}
-                    {user.name}
-                  </td>
-                  <td className="py-3 px-4 text-gray-600 flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-gray-400" /> {user.email}
+                  <td className="py-3 px-4 font-medium text-gray-800">
+                    {user.username}
                   </td>
                   <td className="py-3 px-4">
                     <span
@@ -155,7 +154,7 @@ const Users: React.FC = () => {
         )}
       </motion.div>
 
-      {/* Add User Modal */}
+      {/* Modal */}
       <AnimatePresence>
         {showModal && (
           <motion.div
@@ -185,19 +184,19 @@ const Users: React.FC = () => {
               <div className="space-y-4">
                 <input
                   type="text"
-                  placeholder="Full Name"
-                  value={newUser.name}
+                  placeholder="Username"
+                  value={newUser.username}
                   onChange={(e) =>
-                    setNewUser({ ...newUser, name: e.target.value })
+                    setNewUser({ ...newUser, username: e.target.value })
                   }
                   className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-teal-400 focus:outline-none"
                 />
                 <input
-                  type="email"
-                  placeholder="Email Address"
-                  value={newUser.email}
+                  type="password"
+                  placeholder="Password"
+                  value={newUser.passwordhash}
                   onChange={(e) =>
-                    setNewUser({ ...newUser, email: e.target.value })
+                    setNewUser({ ...newUser, passwordhash: e.target.value })
                   }
                   className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-teal-400 focus:outline-none"
                 />

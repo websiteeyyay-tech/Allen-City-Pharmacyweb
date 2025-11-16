@@ -19,7 +19,7 @@ namespace PharmacyApp.Infrastructure.Repositories
 
         public async Task<IEnumerable<T>> GetAllAsync()
         {
-            return await _dbSet.ToListAsync();
+            return await _dbSet.AsNoTracking().ToListAsync();
         }
 
         public async Task<T?> GetByIdAsync(int id)
@@ -29,6 +29,9 @@ namespace PharmacyApp.Infrastructure.Repositories
 
         public async Task<T> AddAsync(T entity)
         {
+            if (entity == null)
+                throw new System.ArgumentNullException(nameof(entity));
+
             await _dbSet.AddAsync(entity);
             await _context.SaveChangesAsync();
             return entity;
@@ -36,6 +39,9 @@ namespace PharmacyApp.Infrastructure.Repositories
 
         public async Task<T> UpdateAsync(T entity)
         {
+            if (entity == null)
+                throw new System.ArgumentNullException(nameof(entity));
+
             _dbSet.Update(entity);
             await _context.SaveChangesAsync();
             return entity;

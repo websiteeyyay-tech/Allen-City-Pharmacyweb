@@ -26,81 +26,76 @@ interface SalesData {
   sales: number;
 }
 
+// 👇 Updated type to make Recharts happy
 interface CategoryData {
   name: string;
   value: number;
-  [key: string]: string | number;
+  [key: string]: string | number; // ✅ Added index signature
 }
 
-interface Product {
-  id: number;
-  name: string;
-  category: string;
-  stock: number;
-  price: number;
+interface Summary {
+  totalProducts: number;
+  lowStockCount: number;
+  totalStock: number;
+  totalSales: number;
 }
 
-const Reports: React.FC = () => {
+const PharmacistReports: React.FC = () => {
   const [salesData, setSalesData] = useState<SalesData[]>([]);
   const [inventoryData, setInventoryData] = useState<CategoryData[]>([]);
-  const [summary, setSummary] = useState<any>(null);
+  const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProductReports = async () => {
+    const fetchReports = async () => {
       try {
-        const res = await axios.get<Product[]>("http://127.0.0.1:5272/api/Products");
-        const products = res.data;
+        const invRes = await axios.get("http://127.0.0.1:5272/api/Products");
+        const products = invRes.data;
 
-        // 🔹 Inventory category breakdown
         const categoryMap: Record<string, number> = {};
         let totalStock = 0;
         let lowStockCount = 0;
-        let totalValue = 0;
 
-        products.forEach((p) => {
+        products.forEach((p: any) => {
           const category = p.category || "Uncategorized";
-          categoryMap[category] = (categoryMap[category] || 0) + p.stock;
+          const stock = p.stock || 0;
 
-          totalStock += p.stock;
-          totalValue += p.stock * p.price;
+          totalStock += stock;
+          if (stock < 10) lowStockCount++;
 
-          if (p.stock < 10) lowStockCount++;
+          categoryMap[category] = (categoryMap[category] || 0) + stock;
         });
 
         const categoryData: CategoryData[] = Object.entries(categoryMap).map(
           ([name, value]) => ({ name, value })
         );
 
-        // 🔹 Fake sales data (simulated months)
         const months = [
           "Jan", "Feb", "Mar", "Apr", "May", "Jun",
           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
         ];
+
         const generatedSales = months.map((m) => ({
           month: m,
           sales: Math.floor(Math.random() * 10000 + 2000),
         }));
 
-        // 🔹 Summary for dashboard cards
+        setSalesData(generatedSales);
+        setInventoryData(categoryData);
         setSummary({
           totalProducts: products.length,
           totalStock,
           lowStockCount,
-          totalValue,
           totalSales: generatedSales.reduce((sum, s) => sum + s.sales, 0),
         });
-
-        setInventoryData(categoryData);
-        setSalesData(generatedSales);
       } catch (err) {
-        console.error("⚠️ Error fetching product reports:", err);
+        console.error("Error fetching pharmacist reports:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProductReports();
+    fetchReports();
   }, []);
 
   const COLORS = ["#10B981", "#3B82F6", "#F59E0B", "#8B5CF6", "#EC4899"];
@@ -123,7 +118,7 @@ const Reports: React.FC = () => {
         <div className="flex items-center space-x-3">
           <BarChart3 className="w-7 h-7 text-green-600" />
           <h1 className="text-2xl font-semibold text-gray-800">
-            Pharmacist Reports
+            Pharmacist Reports & Insights
           </h1>
         </div>
         <p className="text-gray-400 text-sm">
@@ -131,7 +126,6 @@ const Reports: React.FC = () => {
         </p>
       </motion.div>
 
-      {/* Summary Cards */}
       {summary && (
         <motion.div
           className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
@@ -171,19 +165,18 @@ const Reports: React.FC = () => {
 
           <div className="bg-white p-5 rounded-2xl shadow flex flex-col space-y-2">
             <div className="flex justify-between items-center">
-              <h2 className="font-medium text-gray-600">Total Value (₱)</h2>
+              <h2 className="font-medium text-gray-600">Total Sales (₱)</h2>
               <PieChart className="text-yellow-500" />
             </div>
             <p className="text-2xl font-bold text-gray-800">
-              ₱{summary.totalValue.toLocaleString()}
+              ₱{summary.totalSales.toLocaleString()}
             </p>
           </div>
         </motion.div>
       )}
 
-      {/* Charts Section */}
+      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Sales Chart */}
         <motion.div
           className="bg-white rounded-2xl shadow p-6"
           initial={{ opacity: 0, y: 20 }}
@@ -204,7 +197,6 @@ const Reports: React.FC = () => {
           </ResponsiveContainer>
         </motion.div>
 
-        {/* Inventory Breakdown */}
         <motion.div
           className="bg-white rounded-2xl shadow p-6"
           initial={{ opacity: 0, y: 20 }}
@@ -238,4 +230,4 @@ const Reports: React.FC = () => {
   );
 };
 
-export default Reports;
+export default PharmacistReports;

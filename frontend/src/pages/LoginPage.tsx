@@ -97,8 +97,19 @@ const LoginPage: React.FC = () => {
       localStorage.setItem("user", JSON.stringify(loggedUser));
       setToast({ message: `Welcome back, ${loggedUser.username}!`, type: "success" });
 
+      // ✅ Redirect by role
       setTimeout(() => {
+<<<<<<< HEAD:frontend/src/pages/LoginPage.tsx
         navigate(loggedUser.role === "admin" ? "/admin/dashboard" : "/");
+=======
+        if (loggedUser.role === "admin") {
+          window.location.href = "/admin/dashboard";
+        } else if (loggedUser.role === "doctor") {
+          window.location.href = "/pharmacist/dashboard";
+        } else {
+          window.location.href = "/";
+        }
+>>>>>>> 3e6e73fd46f59ecdbbdbecf874688b93caa9d256:src/pages/LoginPage.tsx
       }, 1200);
     } catch (error: any) {
       console.error("Login error:", error);
