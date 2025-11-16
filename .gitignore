@@ -1,25 +1,46 @@
-# Ignore dependency folders
+#############################
+# FRONTEND (React + Vite)
+#############################
 node_modules/
-
-# Ignore build outputs
 dist/
 dist-ssr/
+*.local
+*.cache
+
+# Vite
+.vite/
+
+# React editor files
+.vscode/*
+!.vscode/extensions.json
+
+
+#############################
+# BACKEND (ASP.NET Core)
+#############################
 bin/
 obj/
 **/bin/
 **/obj/
 
-# Visual Studio cache
-.vs/
+# ASP.NET environment files
+appsettings.Development.json
+appsettings.Local.json
 
-# Ignore editor stuff
-.vscode/*
-!.vscode/extensions.json
-.idea/
-.DS_Store
 
-# Ignore logs and temporary files
-logs
+#############################
+# ENVIRONMENT FILES (Security)
+#############################
+.env
+.env.local
+.env.production
+.env.*.local
+
+
+#############################
+# LOGS
+#############################
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -27,9 +48,39 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Other temp files
+
+#############################
+# DOCKER
+#############################
+docker-compose.override.yml
+*.pid
+*.pid.lock
+
+
+#############################
+# OS / TOOLING FILES
+#############################
+# MacOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# JetBrains IDE
+.idea/
+
+# VS / C# files
+.vs/
 *.user
 *.suo
+
+# Other IDE caches
 *.cache
+
+
+#############################
+# COMPILATION OUTPUT
+#############################
 *.dll
 *.pdb
