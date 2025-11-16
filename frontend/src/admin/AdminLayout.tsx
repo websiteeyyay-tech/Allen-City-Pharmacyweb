@@ -1,5 +1,6 @@
+// src/layouts/AdminLayout.tsx
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   FaHome,
   FaBoxes,
@@ -10,20 +11,20 @@ import {
   FaClipboardList,
   FaUsers,
 } from "react-icons/fa";
-import Logo from "../assets/AllanCityPharmacyLogo.png";
+import logo from "../assets/AllanCityPharmacyLogo.png";
 
-const AdminLayout = () => {
+const AdminLayout: React.FC = () => {
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
-  // ✅ Protect admin-only access
+  // Protect admin-only access
   useEffect(() => {
     if (!user || user.role?.toLowerCase() !== "admin") {
       navigate("/"); // redirect non-admin users
     }
   }, [user, navigate]);
 
-  // ✅ Admin menu items
   const menuItems = [
     { name: "Dashboard", icon: <FaHome />, path: "/admin/dashboard" },
     { name: "Inventory", icon: <FaBoxes />, path: "/admin/inventory" },
@@ -33,7 +34,6 @@ const AdminLayout = () => {
     { name: "Settings", icon: <FaCog />, path: "/admin/settings" },
   ];
 
-  // ✅ Logout handler
   const handleLogout = () => {
     localStorage.removeItem("user");
     navigate("/login");
@@ -45,44 +45,52 @@ const AdminLayout = () => {
       <aside className="w-64 bg-white border-r border-gray-200 flex flex-col p-4 shadow-sm">
         {/* Brand / Logo */}
         <div className="flex items-center mb-6">
-          <img src={Logo} alt="Logo" className="w-8 h-8 mr-2 rounded-md" />
+          <img src={logo} alt="Logo" className="w-8 h-8 mr-2 rounded-md" />
           <h1 className="text-xl font-semibold text-gray-800">Admin Panel</h1>
         </div>
 
         {/* Search */}
         <input
           type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search..."
           className="w-full p-2 mb-4 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
         />
 
         {/* Menu */}
         <nav className="flex-1 space-y-1">
-          {menuItems.map((item) => (
-            <NavLink
-              key={item.name}
-              to={item.path}
-              className={({ isActive }) =>
-                `flex items-center px-3 py-2 rounded-lg text-sm font-medium transition ${
-                  isActive
-                    ? "bg-green-100 text-green-700"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`
-              }
-            >
-              <span className="text-lg mr-3">{item.icon}</span>
-              <span>{item.name}</span>
-            </NavLink>
-          ))}
+          {menuItems
+            .filter((item) =>
+              item.name.toLowerCase().includes(searchQuery.toLowerCase())
+            )
+            .map((item) => (
+              <NavLink
+                key={item.name}
+                to={item.path}
+                className={({ isActive }) =>
+                  `flex items-center px-3 py-2 rounded-lg text-sm font-medium transition ${
+                    isActive
+                      ? "bg-green-100 text-green-700"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`
+                }
+              >
+                <span className="text-lg mr-3">{item.icon}</span>
+                <span>{item.name}</span>
+              </NavLink>
+            ))}
         </nav>
 
         {/* Footer */}
         <div className="border-t mt-4 pt-3 text-sm text-gray-600 space-y-2">
-          <button className="flex items-center w-full px-3 py-2 rounded-lg hover:bg-gray-100">
+          <button
+            type="button"
+            className="flex items-center w-full px-3 py-2 rounded-lg hover:bg-gray-100"
+          >
             <FaQuestionCircle className="mr-2" /> Help Center
           </button>
 
-          {/* Logout */}
           <button
             onClick={handleLogout}
             className="flex items-center w-full px-3 py-2 mt-2 rounded-lg hover:bg-gray-100 text-red-600"

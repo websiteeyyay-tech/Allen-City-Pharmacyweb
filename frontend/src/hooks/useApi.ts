@@ -1,23 +1,27 @@
-import { useState } from "react";
-import api from "../api";
+import axios from "axios";
+import { useState, useEffect } from "react";
 
-export function useApi() {
-  const [loading, setLoading] = useState(false);
+export const useApi = <T>(url: string, deps: any[] = []) => {
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  async function run<T>(fn: () => Promise<T>) {
-    setError(null);
-    setLoading(true);
-    try {
-      const res = await fn();
-      setLoading(false);
-      return res;
-    } catch (err: any) {
-      setError(err?.message ?? "Unknown error");
-      setLoading(false);
-      throw err;
-    }
-  }
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await axios.get(url);
+        setData(res.data ?? null);
+      } catch (err: any) {
+        setError(err.message || "API fetch error");
+        setData(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, deps);
 
-  return { api, run, loading, error, setError };
-}
+  return { data, loading, error };
+};

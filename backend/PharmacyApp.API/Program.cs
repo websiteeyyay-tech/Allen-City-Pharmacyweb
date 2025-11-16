@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using PharmacyApp.API.Middleware;
 using PharmacyApp.Application.Interfaces;
 using PharmacyApp.Application.Services;
 using PharmacyApp.Core.Interfaces;
@@ -22,10 +23,16 @@ builder.Services.AddSwaggerGen();
 // ======================================================
 // 🧩 DATABASE CONFIGURATION
 // ======================================================
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+                       ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+
+if (string.IsNullOrEmpty(connectionString))
+    throw new Exception("Database connection string is missing. Set it in User-Secrets or Environment variables.");
+
 builder.Services.AddDbContext<PharmacyDbContext>(options =>
     options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        b => b.MigrationsAssembly("PharmacyApp.Infrastructure") // ✅ Point EF to correct migrations assembly
+        connectionString,
+        b => b.MigrationsAssembly("PharmacyApp.Infrastructure")
     )
 );
 
@@ -46,14 +53,22 @@ builder.Services.AddScoped<IEmailVerificationRepository, EmailVerificationReposi
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IEmailVerificationService, EmailVerificationService>(); // <-- Added
+builder.Services.AddScoped<IEmailVerificationService, EmailVerificationService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 
-// ------------------ JWT AUTHENTICATION ------------------
+// ======================================================
+// 🧩 JWT AUTHENTICATION
+// ======================================================
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);
+var secretKeyString = jwtSettings["SecretKey"]
+                      ?? Environment.GetEnvironmentVariable("JwtSettings__SecretKey");
+
+if (string.IsNullOrEmpty(secretKeyString))
+    throw new Exception("JWT SecretKey is missing. Set it in User-Secrets or Environment variables.");
+
+var secretKey = Encoding.UTF8.GetBytes(secretKeyString);
 
 builder.Services.AddAuthentication(options =>
 {
@@ -85,13 +100,8 @@ builder.Services.AddCors(options =>
     {
         policy
             .SetIsOriginAllowed(origin =>
-<<<<<<< HEAD
-                origin.Contains(".app.github.dev") ||       // GitHub Codespaces
-                origin.StartsWith("http://localhost") ||   // Local dev
-=======
-                origin.Contains(".app.github.dev") ||   // ✅ GitHub Codespaces
-                origin.StartsWith("http://localhost") || // ✅ Local development
->>>>>>> 3e6e73fd46f59ecdbbdbecf874688b93caa9d256
+                origin.Contains(".app.github.dev") ||  // Codespaces
+                origin.StartsWith("http://localhost") ||
                 origin.StartsWith("http://127.0.0.1"))
             .AllowAnyHeader()
             .AllowAnyMethod()
@@ -105,8 +115,15 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // ======================================================
-// 🧩 MIDDLEWARE
+// 🧩 MIDDLEWARE PIPELINE
 // ======================================================
+
+// Global Exception Handler
+app.UseMiddleware<ExceptionMiddleware>();
+
+// Validation Middleware (DTO validation)
+app.UseMiddleware<ValidationMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -121,11 +138,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-<<<<<<< HEAD
-// Bind to all network interfaces (important for Codespaces / localhost frontend)
-=======
-// ✅ Bind to all interfaces (important for Codespaces or local frontend)
->>>>>>> 3e6e73fd46f59ecdbbdbecf874688b93caa9d256
+// Bind to all network interfaces (Codespaces / localhost frontend)
 app.Urls.Add("http://0.0.0.0:5272");
 
 app.Run();

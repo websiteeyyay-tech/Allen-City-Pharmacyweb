@@ -13,26 +13,32 @@ namespace PharmacyApp.Application.Services
     {
         private readonly IEmailVerificationRepository _repo;
 
+        private const int CODE_LENGTH = 6;
+        private const int EXPIRATION_MINUTES = 5;
+        private const int MAX_FAILED_ATTEMPTS = 3;
+
         public EmailVerificationService(IEmailVerificationRepository repo)
         {
             _repo = repo;
         }
 
-        // -----------------------------
-        // Generate & store code
-        // -----------------------------
+        // -------------------------------------------------------
+        // Generate secure verification code (hashed in DB)
+        // -------------------------------------------------------
         public async Task<string> GenerateCodeAsync(int userId)
         {
-            var code = GenerateRandomCode(6);
-            var codeHash = BCrypt.Net.BCrypt.HashPassword(code);
+            string rawCode = GenerateSecureRandomCode(CODE_LENGTH);
+            string codeHash = BCrypt.Net.BCrypt.HashPassword(rawCode);
 
             var existing = await _repo.GetByUserIdAsync(userId);
+
             if (existing != null)
             {
                 existing.CodeHash = codeHash;
-                existing.ExpiresAt = DateTime.UtcNow.AddMinutes(5);
+                existing.ExpiresAt = DateTime.UtcNow.AddMinutes(EXPIRATION_MINUTES);
                 existing.FailedAttempts = 0;
                 existing.IsUsed = false;
+
                 await _repo.UpdateAsync(existing);
             }
             else
@@ -41,37 +47,44 @@ namespace PharmacyApp.Application.Services
                 {
                     UserId = userId,
                     CodeHash = codeHash,
-                    ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(EXPIRATION_MINUTES),
                     FailedAttempts = 0,
                     IsUsed = false
                 };
+
                 await _repo.AddAsync(verification);
             }
 
             await _repo.SaveChangesAsync();
 
-            // TODO: Send code via email here
-            return code;
+            return rawCode;   // Only send via email, never store plaintext
         }
 
-        // -----------------------------
-        // Verify code
-        // -----------------------------
+        // -------------------------------------------------------
+        // Check if the code is valid (hashed comparison)
+        // -------------------------------------------------------
         public async Task<bool> VerifyCodeAsync(int userId, string code)
         {
             var verification = await _repo.GetByUserIdAsync(userId);
-            if (verification == null || verification.IsUsed)
+
+            if (verification == null)
                 return false;
 
+            // Already used
+            if (verification.IsUsed)
+                return false;
+
+            // Expired
             if (verification.ExpiresAt < DateTime.UtcNow)
                 return false;
 
-            if (verification.FailedAttempts >= 3)
+            // Too many attempts
+            if (verification.FailedAttempts >= MAX_FAILED_ATTEMPTS)
                 return false;
 
-            bool matches = BCrypt.Net.BCrypt.Verify(code, verification.CodeHash);
+            bool correct = BCrypt.Net.BCrypt.Verify(code, verification.CodeHash);
 
-            if (!matches)
+            if (!correct)
             {
                 verification.FailedAttempts++;
                 await _repo.UpdateAsync(verification);
@@ -79,26 +92,29 @@ namespace PharmacyApp.Application.Services
                 return false;
             }
 
+            // Successful validation
             verification.IsUsed = true;
             await _repo.UpdateAsync(verification);
             await _repo.SaveChangesAsync();
+
             return true;
         }
 
-        // -----------------------------
-        // Helper: Generate random numeric code
-        // -----------------------------
-        private string GenerateRandomCode(int length)
+        // -------------------------------------------------------
+        // Generate TRUE cryptographically secure random numeric code
+        // -------------------------------------------------------
+        private string GenerateSecureRandomCode(int length)
         {
             using var rng = RandomNumberGenerator.Create();
             var bytes = new byte[length];
             rng.GetBytes(bytes);
-            var result = new StringBuilder();
+
+            var builder = new StringBuilder();
+
             foreach (var b in bytes)
-            {
-                result.Append((b % 10).ToString());
-            }
-            return result.ToString();
+                builder.Append((b % 10).ToString());
+
+            return builder.ToString();
         }
     }
 }

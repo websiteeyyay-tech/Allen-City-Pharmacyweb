@@ -1,68 +1,21 @@
 // src/pages/LoginPage.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import api from "../api/axios"; // <== Use your global axios instance
+import { motion } from "framer-motion";
+import api from "../api/axios";
+import Toast, { ToastType } from "../components/Toast";
 import "./LoginPage.css";
 
-// Toast Component (unchanged)
-const Toast: React.FC<{
-  message: string;
-  type?: "success" | "error" | "info";
-  onClose: () => void;
-}> = ({ message, type = "info", onClose }) => {
-  useEffect(() => {
-    const timer = setTimeout(onClose, 3000);
-    return () => clearTimeout(timer);
-  }, [onClose]);
-
-  const styles = {
-    success: { bg: "bg-green-50/95", border: "border-green-400", text: "text-green-700", icon: "✅" },
-    error: { bg: "bg-red-50/95", border: "border-red-400", text: "text-red-700", icon: "❌" },
-    info: { bg: "bg-blue-50/95", border: "border-blue-400", text: "text-blue-700", icon: "ℹ️" },
-  };
-
-  const style = styles[type];
-
-  return (
-    <AnimatePresence>
-      {message && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center"
-        >
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
-          <motion.div
-            initial={{ y: 40, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 40, opacity: 0 }}
-            className={`relative z-10 w-[90%] md:w-[23%] ${style.bg} border ${style.border} rounded-2xl shadow-2xl p-8 text-center`}
-          >
-            <div className="text-5xl mb-3">{style.icon}</div>
-            <p className={`text-lg font-semibold ${style.text}`}>{message}</p>
-            <button
-              onClick={onClose}
-              className="mt-6 px-6 py-2 bg-white/80 rounded-xl shadow-md hover:bg-white"
-            >
-              OK
-            </button>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-};
-
-// MAIN LOGIN PAGE
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
 
+  // -----------------------------
+  // HANDLE LOGIN
+  // -----------------------------
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -73,49 +26,34 @@ const LoginPage: React.FC = () => {
 
     try {
       setLoading(true);
+      const response = await api.post("/Auth/login", { username, password });
+      const data = response?.data ?? {};
+      const user = data.user ?? data;
 
-      // 🔥 Correct backend login payload
-      const response = await api.post("/Auth/login", {
-        username,
-        passwordHash: password,
-      });
-
-      // 🔥 Support both wrapped & unwrapped responses
-      const user = response?.data?.user ?? response?.data ?? null;
-
-      if (!user || !user.id) {
+      if (!user?.id) {
         setToast({ message: "Invalid credentials.", type: "error" });
         return;
       }
 
       const loggedUser = {
         id: user.id,
-        username: user.username,
-        role: user.role?.toLowerCase() || "customer",
+        username: user.username ?? "User",
+        role: (user.role ?? "customer").toLowerCase(),
       };
 
       localStorage.setItem("user", JSON.stringify(loggedUser));
       setToast({ message: `Welcome back, ${loggedUser.username}!`, type: "success" });
 
-      // ✅ Redirect by role
+      // Role-based redirect
       setTimeout(() => {
-<<<<<<< HEAD:frontend/src/pages/LoginPage.tsx
-        navigate(loggedUser.role === "admin" ? "/admin/dashboard" : "/");
-=======
-        if (loggedUser.role === "admin") {
-          window.location.href = "/admin/dashboard";
-        } else if (loggedUser.role === "doctor") {
-          window.location.href = "/pharmacist/dashboard";
-        } else {
-          window.location.href = "/";
-        }
->>>>>>> 3e6e73fd46f59ecdbbdbecf874688b93caa9d256:src/pages/LoginPage.tsx
+        if (loggedUser.role === "admin") navigate("/admin/dashboard");
+        else if (loggedUser.role === "doctor") navigate("/pharmacist/dashboard");
+        else navigate("/");
       }, 1200);
     } catch (error: any) {
       console.error("Login error:", error);
-
       const status = error?.response?.status;
-      const msg = error?.response?.data?.message;
+      const msg = error?.response?.data?.message ?? "Unable to reach server.";
 
       if (status === 404) {
         setToast({ message: "Account not found. Redirecting to Sign Up...", type: "info" });
@@ -123,21 +61,32 @@ const LoginPage: React.FC = () => {
       } else if (status === 401) {
         setToast({ message: "Incorrect username or password.", type: "error" });
       } else {
-        setToast({ message: msg || "Unable to reach server.", type: "error" });
+        setToast({ message: msg, type: "error" });
       }
     } finally {
       setLoading(false);
     }
   };
 
+  // -----------------------------
+  // HANDLE GOOGLE LOGIN
+  // -----------------------------
   const handleGoogleLogin = () => {
     window.location.href = `${api.defaults.baseURL}/Auth/google`;
   };
 
+  // -----------------------------
+  // HELPER TO LOAD ASSETS
+  // -----------------------------
+  const asset = (path: string) => `${process.env.PUBLIC_URL}${path}`;
+
+  // -----------------------------
+  // RENDER
+  // -----------------------------
   return (
     <div
       className="relative min-h-screen flex items-center justify-center bg-cover bg-center"
-      style={{ backgroundImage: `url('/src/assets/AllanCityPharmacyLogo.png')` }}
+      style={{ backgroundImage: `url('${asset("/assets/AllanCityPharmacyLogo.png")}')` }}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-[#004d40]/90 via-[#00695c]/70 to-[#ff9800]/70 backdrop-blur-3xl" />
 
@@ -149,7 +98,7 @@ const LoginPage: React.FC = () => {
       >
         {/* Left Side */}
         <div className="hidden md:flex w-1/2 flex-col items-center justify-center text-white p-12">
-          <motion.img src="/src/assets/AllanCityPharmacyLogo.png" className="w-44 mb-6" />
+          <motion.img src={asset("/assets/AllanCityPharmacyLogo.png")} className="w-44 mb-6" />
           <h1 className="text-5xl font-extrabold mb-4">Allen City Pharmacy</h1>
         </div>
 
@@ -173,7 +122,6 @@ const LoginPage: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 className="border w-full p-3 rounded-xl"
               />
-
               <button
                 type="submit"
                 disabled={loading}
@@ -193,7 +141,7 @@ const LoginPage: React.FC = () => {
               onClick={handleGoogleLogin}
               className="w-full border p-2 rounded-xl flex justify-center gap-2 hover:bg-gray-100"
             >
-              <img src="/src/assets/google-icon.png" className="w-5" />
+              <img src={asset("/assets/google-icon.png")} className="w-5" />
               Continue with Google
             </button>
 

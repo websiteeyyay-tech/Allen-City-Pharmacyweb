@@ -1,11 +1,15 @@
 using Microsoft.AspNetCore.Mvc;
+using PharmacyApp.Application.Interfaces;
 using PharmacyApp.Core.Entities;
-using PharmacyApp.Core.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using System;
+using System.Threading.Tasks;
 
 namespace PharmacyApp.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize] // All endpoints require authentication
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -16,18 +20,36 @@ namespace PharmacyApp.API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetUsers()
         {
-            var users = await _userService.GetAllAsync();
-            return Ok(users);
+            try
+            {
+                var users = await _userService.GetAllAsync();
+                return Ok(new { message = "Users retrieved successfully", data = users });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Failed to retrieve users", details = ex.Message });
+            }
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateUser([FromBody] User user)
         {
-            if (user == null) return BadRequest("Invalid user data.");
-            await _userService.CreateAsync(user);
-            return Ok(user);
+            if (user == null)
+                return BadRequest(new { message = "Invalid user data" });
+
+            try
+            {
+                var createdUser = await _userService.CreateAsync(user);
+                return Ok(new { message = "User created successfully", data = createdUser });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Failed to create user", details = ex.Message });
+            }
         }
     }
 }

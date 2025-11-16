@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using PharmacyApp.Application.Interfaces;   // ✅ For IOrderService, IProductService
-using PharmacyApp.Core.Entities;            // ✅ For Order and Product
+using PharmacyApp.Application.Interfaces;
+using PharmacyApp.Core.Entities;
+using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Threading.Tasks;
 
@@ -8,6 +9,7 @@ namespace PharmacyApp.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize] // All order endpoints require authentication
     public class OrdersController : ControllerBase
     {
         private readonly IOrderService _orderService;
@@ -22,49 +24,76 @@ namespace PharmacyApp.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetOrders()
         {
-            var orders = await _orderService.GetAllOrdersAsync();
-            return Ok(orders);
+            try
+            {
+                var orders = await _orderService.GetAllOrdersAsync();
+                return Ok(new { message = "Orders retrieved successfully", data = orders });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Failed to retrieve orders", details = ex.Message });
+            }
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetOrderById(int id)
         {
-            var order = await _orderService.GetOrderByIdAsync(id);
-            if (order == null)
-                return NotFound(new { message = "Order not found" });
+            try
+            {
+                var order = await _orderService.GetOrderByIdAsync(id);
+                if (order == null)
+                    return NotFound(new { message = "Order not found" });
 
-            return Ok(order);
+                return Ok(new { message = "Order retrieved successfully", data = order });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Failed to retrieve order", details = ex.Message });
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateOrder([FromBody] Order order)
         {
             if (order == null)
-                return BadRequest(new { message = "Invalid order data." });
+                return BadRequest(new { message = "Invalid order data" });
 
-            var product = await _productService.GetByIdAsync(order.ProductId);
-            if (product == null)
-                return BadRequest(new { message = "Product not found." });
-
-            // ✅ Calculate total and assign order info
-            order.TotalPrice = order.Quantity * product.Price;
-            order.OrderDate = DateTime.UtcNow;
-            order.Status = "Pending";
-
-            await _orderService.CreateOrderAsync(order);
-
-            return Ok(new
+            try
             {
-                message = "Order placed successfully!",
-                order
-            });
+                var product = await _productService.GetByIdAsync(order.ProductId);
+                if (product == null)
+                    return BadRequest(new { message = "Product not found" });
+
+                order.TotalPrice = order.Quantity * product.Price;
+                order.OrderDate = DateTime.UtcNow;
+                order.Status = "Pending";
+
+                await _orderService.CreateOrderAsync(order);
+                return Ok(new { message = "Order placed successfully", data = order });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Failed to create order", details = ex.Message });
+            }
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")] // Only Admins can delete orders
         public async Task<IActionResult> DeleteOrder(int id)
         {
-            await _orderService.DeleteOrderAsync(id);
-            return NoContent();
+            try
+            {
+                var existingOrder = await _orderService.GetOrderByIdAsync(id);
+                if (existingOrder == null)
+                    return NotFound(new { message = "Order not found" });
+
+                await _orderService.DeleteOrderAsync(id);
+                return Ok(new { message = $"Order {id} deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Failed to delete order", details = ex.Message });
+            }
         }
     }
 }
