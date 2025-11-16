@@ -1,32 +1,48 @@
 #############################
 # FRONTEND (React + Vite)
 #############################
+# Node modules and build outputs
 node_modules/
 dist/
 dist-ssr/
+.vite/
+*.tsbuildinfo
+
+# Local configs
 *.local
 *.cache
 
-# Vite
-.vite/
-
-# React editor files
+# VS Code settings
 .vscode/*
 !.vscode/extensions.json
 
+# Test coverage
+coverage/
 
 #############################
 # BACKEND (ASP.NET Core)
 #############################
+# Build outputs
 bin/
 obj/
 **/bin/
 **/obj/
 
+# Publish outputs
+publish/
+out/
+
+# NuGet packages
+**/packages/
+*.nupkg
+
 # ASP.NET environment files
 appsettings.Development.json
 appsettings.Local.json
 
+# Logs
+logs/
+*.log
 
 #############################
 # ENVIRONMENT FILES (Security)
@@ -36,19 +52,6 @@ appsettings.Local.json
 .env.production
 .env.*.local
 
-
-#############################
-# LOGS
-#############################
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-
 #############################
 # DOCKER
 #############################
@@ -56,11 +59,10 @@ docker-compose.override.yml
 *.pid
 *.pid.lock
 
-
 #############################
 # OS / TOOLING FILES
 #############################
-# MacOS
+# macOS
 .DS_Store
 
 # Windows
@@ -70,14 +72,13 @@ ehthumbs.db
 # JetBrains IDE
 .idea/
 
-# VS / C# files
+# Visual Studio
 .vs/
 *.user
 *.suo
 
 # Other IDE caches
 *.cache
-
 
 #############################
 # COMPILATION OUTPUT

@@ -1,27 +1,23 @@
+// src/api/axios.ts
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5272/api",
+  baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:5272/api",
+  withCredentials: false, // set true only if backend uses cookies for auth
   headers: { "Content-Type": "application/json" },
 });
 
-api.interceptors.request.use((req) => {
-  console.log("🟢 Request:", req.method?.toUpperCase(), req.url, req.data);
-  return req;
-});
-
+// Simple response interceptor to normalize errors
 api.interceptors.response.use(
-  (res) => {
-    console.log("✅ Response:", res.status, res.data);
-    return res;
-  },
-  (error) => {
-    if (error.response) {
-      console.error("❌ API Error:", error.response.status, error.response.data);
-    } else {
-      console.error("🚫 Network Error:", error.message);
-    }
-    return Promise.reject(error);
+  (res) => res,
+  (err) => {
+    // normalize error shape
+    const normalized = {
+      message: err?.response?.data?.message ?? err?.message ?? "Unknown error",
+      status: err?.response?.status,
+      original: err,
+    };
+    return Promise.reject(normalized);
   }
 );
 

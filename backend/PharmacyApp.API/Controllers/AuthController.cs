@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using PharmacyApp.Core.Entities;
-using PharmacyApp.Core.Interfaces;
+using PharmacyApp.Application.DTOs;
 using PharmacyApp.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 
 namespace PharmacyApp.API.Controllers
 {
@@ -10,75 +10,121 @@ namespace PharmacyApp.API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly IEmailVerificationService _emailVerificationService;
 
-        public AuthController(IAuthService authService)
+        public AuthController(
+            IAuthService authService,
+            IEmailVerificationService emailVerificationService)
         {
             _authService = authService;
+            _emailVerificationService = emailVerificationService;
         }
 
-        // ✅ Register endpoint
+        // -----------------------------
+        // REGISTER
+        // -----------------------------
         [HttpPost("register")]
-        public IActionResult Register([FromBody] User user)
+        public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
-            if (user == null)
-                return BadRequest(new { message = "Invalid user data." });
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            var existingUser = _authService.GetUserByUsername(user.Username);
-            if (existingUser != null)
-                return Conflict(new { message = "Username already exists. Please choose another one." });
+            var result = await _authService.Register(dto);
 
-            var newUser = _authService.Register(user);
-            if (newUser == null)
-                return StatusCode(500, new { message = "User registration failed." });
+            if (!result.Success)
+                return BadRequest(new { message = result.ErrorMessage });
 
-            return Ok(new { message = "Registration successful!", user = newUser });
+            // Send email verification code
+            var code = await _emailVerificationService.GenerateCodeAsync(result.UserId);
+            // TODO: Send 'code' via SMTP (or 3rd party email service)
+
+            return Ok(new
+            {
+                message = "Registration successful! Please check your email to verify your account.",
+                userId = result.UserId
+            });
         }
 
-        // ✅ Login endpoint
-        [HttpPost("login")]
-        public IActionResult Login([FromBody] User user)
+        // -----------------------------
+        // VERIFY EMAIL
+        // -----------------------------
+        [HttpPost("verify-email")]
+        public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailDto dto)
         {
-            if (user == null)
-                return BadRequest(new { message = "Invalid user data." });
+            bool isValid = await _emailVerificationService.VerifyCodeAsync(dto.UserId, dto.Code);
+            if (!isValid)
+                return BadRequest(new { message = "Invalid or expired code." });
 
-            var loggedUser = _authService.Login(user.Username, user.PasswordHash);
-            if (loggedUser == null)
+            await _authService.MarkUserAsVerified(dto.UserId);
+
+            return Ok(new { message = "Email verified successfully!" });
+        }
+
+        // -----------------------------
+        // LOGIN (returns JWT)
+        // -----------------------------
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var response = await _authService.Login(dto.Username, dto.Password);
+
+            if (response == null)
                 return Unauthorized(new { message = "Invalid username or password." });
 
-            return Ok(new { message = "Login successful!", user = loggedUser });
+            if (!response.IsVerified)
+                return Unauthorized(new { message = "Please verify your email before logging in." });
+
+            return Ok(new
+            {
+                message = "Login successful!",
+                user = new
+                {
+                    response.Id,
+                    response.Username,
+                    response.Role
+                },
+                token = response.Token
+            });
         }
 
-        // ✅ Delete user endpoint
+        // -----------------------------
+        // DELETE USER (Admin only)
+        // -----------------------------
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
-        public IActionResult DeleteUser(int id)
+        public async Task<IActionResult> DeleteUser(int id)
         {
-            var existingUser = _authService.GetUserById(id);
-            if (existingUser == null)
-                return NotFound(new { message = $"User with ID {id} not found." });
+            var result = await _authService.DeleteUser(id);
 
-            _authService.DeleteUser(id);
+            if (!result.Success)
+                return NotFound(new { message = result.ErrorMessage });
+
             return Ok(new { message = $"User with ID {id} has been deleted successfully." });
         }
-        // ✅ Update user endpoint
+
+        // -----------------------------
+        // UPDATE USER
+        // -----------------------------
+        [Authorize]
         [HttpPut("{id}")]
-        public IActionResult UpdateUser(int id, [FromBody] UpdateUserDto dto)
+        public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserDto dto)
         {
-            try
-            {
-                var updatedUser = _authService.UpdateUser(id, dto.NewUsername, dto.NewPassword);
-                return Ok(updatedUser);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-        public class UpdateUserDto
-        {
-            public string? NewUsername { get; set; }
-            public string? NewPassword { get; set; }
-        }
+            var user = await _authService.UpdateUser(id, dto.NewUsername, dto.NewPassword);
 
+            if (user == null)
+                return NotFound(new { message = "User not found." });
+
+            return Ok(new
+            {
+                message = "User updated successfully!",
+                user = new { user.Id, user.Username, user.Role }
+            });
+        }
     }
 }

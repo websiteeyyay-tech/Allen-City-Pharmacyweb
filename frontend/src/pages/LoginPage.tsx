@@ -2,16 +2,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import axios from "axios";
+import api from "../api/axios"; // <== Use your global axios instance
 import "./LoginPage.css";
 
-// ✅ Axios instance
-const api = axios.create({
-  baseURL: "http://localhost:5272/api",
-  headers: { "Content-Type": "application/json" },
-});
-
-// ✅ Toast Component
+// Toast Component (unchanged)
 const Toast: React.FC<{
   message: string;
   type?: "success" | "error" | "info";
@@ -27,6 +21,7 @@ const Toast: React.FC<{
     error: { bg: "bg-red-50/95", border: "border-red-400", text: "text-red-700", icon: "❌" },
     info: { bg: "bg-blue-50/95", border: "border-blue-400", text: "text-blue-700", icon: "ℹ️" },
   };
+
   const style = styles[type];
 
   return (
@@ -36,7 +31,6 @@ const Toast: React.FC<{
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
           className="fixed inset-0 z-50 flex items-center justify-center"
         >
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
@@ -44,14 +38,13 @@ const Toast: React.FC<{
             initial={{ y: 40, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 40, opacity: 0 }}
-            transition={{ duration: 0.4, ease: "easeInOut" }}
-            className={`relative z-10 w-[90%] md:w-[23%] ${style.bg} border ${style.border} rounded-2xl shadow-2xl p-8 flex flex-col items-center text-center`}
+            className={`relative z-10 w-[90%] md:w-[23%] ${style.bg} border ${style.border} rounded-2xl shadow-2xl p-8 text-center`}
           >
             <div className="text-5xl mb-3">{style.icon}</div>
             <p className={`text-lg font-semibold ${style.text}`}>{message}</p>
             <button
               onClick={onClose}
-              className="mt-6 px-6 py-2 bg-white/80 rounded-xl shadow-md text-gray-700 hover:bg-white"
+              className="mt-6 px-6 py-2 bg-white/80 rounded-xl shadow-md hover:bg-white"
             >
               OK
             </button>
@@ -62,7 +55,7 @@ const Toast: React.FC<{
   );
 };
 
-// ✅ Main Login Page
+// MAIN LOGIN PAGE
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
@@ -70,7 +63,6 @@ const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
 
-  // ✅ Login Handler
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -82,136 +74,121 @@ const LoginPage: React.FC = () => {
     try {
       setLoading(true);
 
+      // 🔥 Correct backend login payload
       const response = await api.post("/Auth/login", {
         username,
         passwordHash: password,
       });
 
-      const user = response.data.user || response.data;
+      // 🔥 Support both wrapped & unwrapped responses
+      const user = response?.data?.user ?? response?.data ?? null;
 
       if (!user || !user.id) {
-        setToast({ message: "Invalid credentials or user not found.", type: "error" });
+        setToast({ message: "Invalid credentials.", type: "error" });
         return;
       }
 
       const loggedUser = {
         id: user.id,
         username: user.username,
-        role: user.role?.toLowerCase() || "user",
+        role: user.role?.toLowerCase() || "customer",
       };
 
       localStorage.setItem("user", JSON.stringify(loggedUser));
-
       setToast({ message: `Welcome back, ${loggedUser.username}!`, type: "success" });
 
       setTimeout(() => {
-        window.location.href = loggedUser.role === "admin" ? "/admin/dashboard" : "/";
+        navigate(loggedUser.role === "admin" ? "/admin/dashboard" : "/");
       }, 1200);
     } catch (error: any) {
-      console.error("❌ Login error:", error);
+      console.error("Login error:", error);
 
-      if (error.response?.status === 404) {
+      const status = error?.response?.status;
+      const msg = error?.response?.data?.message;
+
+      if (status === 404) {
         setToast({ message: "Account not found. Redirecting to Sign Up...", type: "info" });
-        setTimeout(() => navigate("/signup"), 2000);
-      } else if (error.response?.status === 401) {
+        setTimeout(() => navigate("/signup"), 1400);
+      } else if (status === 401) {
         setToast({ message: "Incorrect username or password.", type: "error" });
       } else {
-        setToast({
-          message: error.response?.data?.message || "Unable to connect to backend.",
-          type: "error",
-        });
+        setToast({ message: msg || "Unable to reach server.", type: "error" });
       }
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ Google login redirect
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:5272/api/Auth/google";
+    window.location.href = `${api.defaults.baseURL}/Auth/google`;
   };
 
   return (
     <div
-      className="relative min-h-screen flex items-center justify-center bg-cover bg-center overflow-hidden"
+      className="relative min-h-screen flex items-center justify-center bg-cover bg-center"
       style={{ backgroundImage: `url('/src/assets/AllanCityPharmacyLogo.png')` }}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-[#004d40]/90 via-[#00695c]/70 to-[#ff9800]/70 backdrop-blur-3xl"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-[#004d40]/90 via-[#00695c]/70 to-[#ff9800]/70 backdrop-blur-3xl" />
 
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.9 }}
-        className="relative z-10 flex flex-col md:flex-row w-full max-w-6xl shadow-2xl rounded-3xl overflow-hidden bg-white/15 border border-white/20 backdrop-blur-2xl"
+        className="relative z-10 flex flex-col md:flex-row max-w-6xl w-full rounded-3xl bg-white/15 border backdrop-blur-2xl"
       >
-        {/* Left Side (Logo + Branding) */}
-        <div className="hidden md:flex w-1/2 flex-col items-center justify-center text-white p-12 relative">
-          <motion.img
-            src="/src/assets/AllanCityPharmacyLogo.png"
-            alt="Logo"
-            className="w-44 mb-6 drop-shadow-2xl"
-          />
-          <h1 className="text-5xl font-extrabold mb-4 text-center">Allen City Pharmacy</h1>
-          <p className="text-white/85 text-lg text-center max-w-md">
-            Secure access for healthcare professionals and patients.
-          </p>
+        {/* Left Side */}
+        <div className="hidden md:flex w-1/2 flex-col items-center justify-center text-white p-12">
+          <motion.img src="/src/assets/AllanCityPharmacyLogo.png" className="w-44 mb-6" />
+          <h1 className="text-5xl font-extrabold mb-4">Allen City Pharmacy</h1>
         </div>
 
-        {/* Right Side (Login Form) */}
-        <div className="flex w-full md:w-1/2 items-center justify-center p-10 bg-white/95 backdrop-blur-xl">
-          <div className="w-full max-w-md bg-white shadow-2xl rounded-3xl p-10 border border-gray-100 relative overflow-hidden">
-            <h2 className="text-4xl font-extrabold text-[#004d40] mb-2 text-center drop-shadow-sm">
-              Welcome Back!
-            </h2>
-            <p className="text-gray-600 text-center mb-6">Sign in to continue your journey</p>
+        {/* Right Side */}
+        <div className="w-full md:w-1/2 flex items-center justify-center p-10 bg-white/95">
+          <div className="w-full max-w-md bg-white p-10 rounded-3xl shadow-2xl">
+            <h2 className="text-4xl font-extrabold text-[#004d40] text-center">Welcome Back!</h2>
 
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form onSubmit={handleLogin} className="space-y-4 mt-6">
               <input
                 type="text"
+                placeholder="Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Username"
-                className="w-full px-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#43a047]"
-                required
+                className="border w-full p-3 rounded-xl"
               />
               <input
                 type="password"
+                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
-                className="w-full px-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#ff9800]"
-                required
+                className="border w-full p-3 rounded-xl"
               />
+
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-[#43a047] to-[#ff9800] text-white py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-[1.02]"
+                className="w-full bg-gradient-to-r from-[#43a047] to-[#ff9800] text-white py-3 rounded-xl"
               >
                 {loading ? "Signing In..." : "Sign In"}
               </button>
             </form>
 
             <div className="flex items-center my-4">
-              <hr className="flex-1 border-gray-300" />
+              <hr className="flex-1" />
               <span className="px-2 text-gray-500">or</span>
-              <hr className="flex-1 border-gray-300" />
+              <hr className="flex-1" />
             </div>
 
             <button
               onClick={handleGoogleLogin}
-              className="flex items-center justify-center gap-2 border border-gray-300 px-4 py-2 rounded-xl hover:bg-gray-100 transition w-full"
+              className="w-full border p-2 rounded-xl flex justify-center gap-2 hover:bg-gray-100"
             >
-              <img src="/src/assets/google-icon.png" alt="Google" className="w-5 h-5" />
+              <img src="/src/assets/google-icon.png" className="w-5" />
               Continue with Google
             </button>
 
-            <p className="text-center text-gray-600 mt-4">
-              Don’t have an account?{" "}
-              <button
-                type="button"
-                onClick={() => navigate("/signup")}
-                className="text-[#ff9800] hover:text-[#f57c00] font-semibold"
-              >
+            <p className="text-center mt-4">
+              Don’t have an account?
+              <button onClick={() => navigate("/signup")} className="text-[#ff9800] font-semibold ml-1">
                 Sign Up
               </button>
             </p>
@@ -219,7 +196,6 @@ const LoginPage: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* Toast Notifications */}
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
