@@ -1,47 +1,25 @@
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
-using PharmacyApp.Core.Entities;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
+using PharmacyApp.Application.Interfaces;
+using Microsoft.Extensions.Options;
 using System.Text;
+using Microsoft.IdentityModel.Tokens;
 
 namespace PharmacyApp.Application.Services
 {
-    public interface ITokenService
-    {
-        string GenerateToken(User user);
-    }
-
     public class TokenService : ITokenService
     {
-        private readonly IConfiguration _config;
+        private readonly JwtSettings _jwtSettings;
 
-        public TokenService(IConfiguration config)
+        public TokenService(IOptions<JwtSettings> options)
         {
-            _config = config;
+            _jwtSettings = options.Value ?? throw new ArgumentNullException(nameof(options));
         }
 
-        public string GenerateToken(User user)
+        public SymmetricSecurityKey GetSymmetricSecurityKey()
         {
-            var jwtSettings = _config.GetSection("JwtSettings");
-            var key = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);
+            if (string.IsNullOrEmpty(_jwtSettings.SecretKey))
+                throw new InvalidOperationException("JWT SecretKey is missing.");
 
-            var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Username),
-                new Claim("id", user.Id.ToString()),
-                new Claim(ClaimTypes.Role, user.Role)
-            };
-
-            var token = new JwtSecurityToken(
-                issuer: jwtSettings["Issuer"],
-                audience: jwtSettings["Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(double.Parse(jwtSettings["ExpiryMinutes"])),
-                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            return new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
         }
     }
 }

@@ -1,4 +1,4 @@
-using PharmacyApp.Core.Interfaces;
+using PharmacyApp.Application.Interfaces;
 
 namespace PharmacyApp.Application.Services
 {

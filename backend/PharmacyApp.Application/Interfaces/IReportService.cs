@@ -1,4 +1,4 @@
-namespace PharmacyApp.Core.Interfaces
+namespace PharmacyApp.Application.Interfaces
 {
     public interface IReportService
     {
