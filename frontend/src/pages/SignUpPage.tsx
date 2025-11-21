@@ -1,48 +1,55 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import api from "../api/axios";
 import Toast, { ToastType } from "../components/Toast";
 
-const RESEND_DELAY = 30;
+const asset = (path: string) => path;
 
-const EmailVerificationPage: React.FC = () => {
+const SignupPage: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
 
-  const [email] = useState<string>(location.state?.email || "");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
-  const [counter, setCounter] = useState<number>(0);
 
-  // Countdown effect
-  useEffect(() => {
-    if (counter > 0) {
-      const timer = setTimeout(() => setCounter(counter - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [counter]);
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const handleResendVerification = async () => {
-    if (!email) {
-      setToast({ message: "Invalid email address.", type: "error" });
+    if (!username || !email || !password) {
+      setToast({ message: "Please fill in all fields.", type: "error" });
       return;
     }
 
     try {
       setLoading(true);
-      await api.post("/Auth/resend-verification", { email });
 
-      setToast({
-        message: "Verification email sent successfully!",
-        type: "success",
+      const response = await api.post("/Auth/register", {
+        username,
+        email,
+        password,
       });
 
-      setCounter(RESEND_DELAY);
-    } catch (err: any) {
-      const msg =
-        err?.response?.data?.message ||
-        "Unable to resend verification email.";
+      if (response?.success === false) {
+        setToast({ message: response.message ?? "Registration failed", type: "error" });
+        return;
+      }
+
+      // SUCCESS → show toast
+      setToast({ message: "Account created! Verify your email.", type: "success" });
+
+      // Redirect to verification page WITH EMAIL
+      setTimeout(() => {
+        navigate("/verify-email", {
+          state: { email },
+        });
+      }, 1200);
+
+    } catch (error: any) {
+      const msg = error?.response?.data?.message ?? "Signup failed. Try again.";
       setToast({ message: msg, type: "error" });
     } finally {
       setLoading(false);
@@ -50,77 +57,85 @@ const EmailVerificationPage: React.FC = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-tr from-emerald-700 via-teal-400 via-orange-400 to-yellow-400 bg-[length:400%_400%] animate-[gradient_10s_ease_infinite] p-4 font-[Poppins]">
+    <div
+      className="relative min-h-screen flex items-center justify-center bg-cover bg-center"
+      style={{
+        backgroundImage: `url('${asset("/assets/AllanCityPharmacyLogo.png")}')`,
+      }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-[#004d40]/90 via-[#00695c]/70 to-[#ff9800]/70 backdrop-blur-3xl" />
 
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.9 }}
-        className="bg-white/95 rounded-2xl shadow-xl backdrop-blur-md p-8 max-w-lg w-full"
+        className="relative z-10 flex flex-col md:flex-row max-w-6xl w-full rounded-3xl bg-white/15 border backdrop-blur-2xl"
       >
-        {/* Logo */}
-        <img
-          src="/Logo1.png"
-          alt="Allen City Pharmacy Logo"
-          className="w-24 mx-auto mb-4"
-        />
-
-        <h2 className="text-3xl font-extrabold text-teal-900 text-center">
-          Verify Your Email
-        </h2>
-
-        <p className="text-center text-gray-700 mt-3">
-          We’ve sent a verification email to:
-          <br />
-          <strong className="text-teal-900">{email || "your email"}</strong>
-        </p>
-
-        <p className="text-center text-gray-600 mt-2 text-sm">
-          Please check your inbox and spam folder.
-        </p>
-
-        <div className="mt-8 space-y-4">
-
-          {/* Resend Button */}
-          <button
-            onClick={handleResendVerification}
-            disabled={loading || counter > 0}
-            className={`
-              w-full py-3 rounded-lg font-medium text-white 
-              transition-transform
-              bg-teal-700 hover:bg-teal-900
-              disabled:opacity-60 disabled:cursor-not-allowed
-            `}
-          >
-            {loading
-              ? "Sending..."
-              : counter > 0
-              ? `Resend in ${counter}s`
-              : "Resend Verification Email"}
-          </button>
-
-          <button
-            onClick={() => navigate("/login")}
-            className="w-full text-center text-teal-700 hover:text-teal-900 font-medium"
-          >
-            Back to Login
-          </button>
+        {/* Left Side */}
+        <div className="hidden md:flex w-1/2 flex-col items-center justify-center text-white p-12">
+          <motion.img src={asset("/assets/AllanCityPharmacyLogo.png")} className="w-44 mb-6" />
+          <h1 className="text-5xl font-extrabold mb-4">Allen City Pharmacy</h1>
         </div>
 
-        <p className="text-gray-500 text-xs mt-6 text-center">
-          © 2025 Allen City Pharmacy. All rights reserved.
-        </p>
+        {/* Right Side */}
+        <div className="w-full md:w-1/2 flex items-center justify-center p-10 bg-white/95">
+          <div className="w-full max-w-md bg-white p-10 rounded-3xl shadow-2xl">
+            <h2 className="text-4xl font-extrabold text-[#004d40] text-center">
+              Create Your Account
+            </h2>
+
+            <form onSubmit={handleSignup} className="space-y-4 mt-6">
+              <input
+                type="text"
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="border w-full p-3 rounded-xl"
+              />
+
+              <input
+                type="email"
+                placeholder="Email Address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="border w-full p-3 rounded-xl"
+              />
+
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="border w-full p-3 rounded-xl"
+              />
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-[#43a047] to-[#ff9800] text-white py-3 rounded-xl"
+              >
+                {loading ? "Creating Account..." : "Sign Up"}
+              </button>
+            </form>
+
+            <p className="text-center mt-4">
+              Already have an account?
+              <button
+                onClick={() => navigate("/login")}
+                className="text-[#ff9800] ml-1 font-semibold"
+              >
+                Login
+              </button>
+            </p>
+          </div>
+        </div>
       </motion.div>
 
       {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
     </div>
   );
 };
 
-export default EmailVerificationPage;
+export default SignupPage;

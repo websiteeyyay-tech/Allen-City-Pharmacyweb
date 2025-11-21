@@ -10,14 +10,30 @@ const RESEND_DELAY = 30; // seconds
 const EmailVerificationPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [email, setEmail] = useState<string>(location.state?.email || "");
+
+  // Get email from SignUpPage
+  const passedEmail = location.state?.email || "";
+
+  const [email] = useState<string>(passedEmail);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const [counter, setCounter] = useState<number>(0);
 
+  // 🔥 If email is missing → redirect back to SignupPage
+  useEffect(() => {
+    if (!passedEmail) {
+      setToast({
+        message: "No email found. Redirecting to Signup...",
+        type: "error",
+      });
+
+      setTimeout(() => navigate("/signup"), 2000);
+    }
+  }, [passedEmail, navigate]);
+
   // Countdown effect
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: number;
     if (counter > 0) {
       timer = setTimeout(() => setCounter(counter - 1), 1000);
     }
@@ -25,10 +41,7 @@ const EmailVerificationPage: React.FC = () => {
   }, [counter]);
 
   const handleResendVerification = async () => {
-    if (!email) {
-      setToast({ message: "Please provide a valid email address.", type: "error" });
-      return;
-    }
+    if (!email) return;
 
     try {
       setLoading(true);
@@ -36,15 +49,14 @@ const EmailVerificationPage: React.FC = () => {
       setToast({ message: "Verification email has been sent!", type: "success" });
       setCounter(RESEND_DELAY); // start countdown
     } catch (error: any) {
-      console.error("Resend verification error:", error);
-      const msg = error?.response?.data?.message ?? "An error occurred while resending the email.";
+      const msg = error?.response?.data?.message ?? "Resend error occurred.";
       setToast({ message: msg, type: "error" });
     } finally {
       setLoading(false);
     }
   };
 
-  const asset = (path: string) => `${process.env.PUBLIC_URL}${path}`;
+  const asset = (path: string) => `${import.meta.env.BASE_URL}${path}`;
 
   return (
     <div
@@ -59,18 +71,19 @@ const EmailVerificationPage: React.FC = () => {
         transition={{ duration: 0.9 }}
         className="relative z-10 flex flex-col md:flex-row max-w-6xl w-full rounded-3xl bg-white/15 border backdrop-blur-2xl"
       >
-        {/* Left Side */}
+        {/* LEFT PANEL */}
         <div className="hidden md:flex w-1/2 flex-col items-center justify-center text-white p-12">
           <motion.img src={asset("/assets/AllanCityPharmacyLogo.png")} className="w-44 mb-6" />
           <h1 className="text-5xl font-extrabold mb-4">Allen City Pharmacy</h1>
         </div>
 
-        {/* Right Side */}
+        {/* RIGHT PANEL */}
         <div className="w-full md:w-1/2 flex items-center justify-center p-10 bg-white/95">
           <div className="w-full max-w-md bg-white p-10 rounded-3xl shadow-2xl">
             <h2 className="text-4xl font-extrabold text-[#004d40] text-center">Email Verification</h2>
+
             <p className="text-center text-lg mt-4">
-              A verification email has been sent to <strong>{email || "your email"}</strong>. Please check your inbox (and spam folder)!
+              A verification email has been sent to <strong>{email}</strong>.
             </p>
 
             <div className="flex flex-col items-center mt-6 space-y-4">

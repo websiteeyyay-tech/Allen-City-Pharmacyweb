@@ -24,9 +24,9 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
 
-    // Ensure headers exist (Axios v1 expects AxiosRequestHeaders)
     config.headers = config.headers ?? {};
-    (config.headers as Record<string, string>).Authorization = token ? `Bearer ${token}` : "";
+    (config.headers as Record<string, string>).Authorization =
+      token ? `Bearer ${token}` : "";
 
     return config;
   },
@@ -35,18 +35,15 @@ api.interceptors.request.use(
 
 // Response interceptor
 api.interceptors.response.use(
-  (response: AxiosResponse) => response.data,
+  (response: AxiosResponse) => {
+    return response.data; // This removes AxiosResponse type
+  },
   (error: AxiosError<any>) => {
-    const normalized: ApiError = {
-      message:
-        (error.response?.data &&
-          (error.response.data.message ?? JSON.stringify(error.response.data))) ||
-        error.message ||
-        "Unknown error",
+    return Promise.reject({
+      message: error.response?.data?.message ?? error.message ?? "Unknown error",
       status: error.response?.status,
       original: error,
-    };
-    return Promise.reject(normalized);
+    });
   }
 );
 
