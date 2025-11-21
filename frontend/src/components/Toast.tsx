@@ -1,7 +1,7 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export type ToastType = "success" | "error" | "info";
+export type ToastType = "success" | "error" | "info" | "warning";
 
 export interface ToastProps {
   message: string;
@@ -10,31 +10,48 @@ export interface ToastProps {
 }
 
 const Toast: React.FC<ToastProps> = ({ message, type = "info", onClose }) => {
-  // Auto-dismiss after 3.5s
+  const [progress, setProgress] = useState(100);
+
   useEffect(() => {
-    const timer = setTimeout(onClose, 3500);
-    return () => clearTimeout(timer);
+    const duration = 3500;
+    const step = 100 / (duration / 50);
+
+    const interval = setInterval(() => {
+      setProgress((p) => Math.max(0, p - step));
+    }, 50);
+
+    const timer = setTimeout(onClose, duration);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timer);
+    };
   }, [onClose]);
 
-  // Toast palette
   const palette = {
     success: {
-      bg: "bg-green-50/95",
-      border: "border-green-400",
-      text: "text-green-800",
-      icon: "✅",
+      bg: "bg-green-500",
+      iconBg: "bg-green-600",
+      title: "Success!",
+      icon: "✓",
     },
     error: {
-      bg: "bg-red-50/95",
-      border: "border-red-400",
-      text: "text-red-800",
-      icon: "❌",
+      bg: "bg-red-500",
+      iconBg: "bg-red-600",
+      title: "Error!",
+      icon: "✕",
     },
     info: {
-      bg: "bg-blue-50/95",
-      border: "border-blue-400",
-      text: "text-blue-800",
-      icon: "ℹ️",
+      bg: "bg-blue-500",
+      iconBg: "bg-blue-600",
+      title: "Info!",
+      icon: "i",
+    },
+    warning: {
+      bg: "bg-yellow-500",
+      iconBg: "bg-yellow-600",
+      title: "Warning!",
+      icon: "!",
     },
   } as const;
 
@@ -44,26 +61,60 @@ const Toast: React.FC<ToastProps> = ({ message, type = "info", onClose }) => {
     <AnimatePresence>
       {message && (
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ type: "spring", stiffness: 500, damping: 30 }}
-          className="fixed top-5 right-5 z-50 flex flex-col gap-3 pointer-events-none"
+          initial={{ opacity: 0, x: -25 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -25 }}
+          transition={{ type: "spring", stiffness: 350, damping: 25 }}
+          className="fixed top-6 left-6 z-50 pointer-events-none"
         >
           <motion.div
-            className={`pointer-events-auto flex items-center gap-3 rounded-xl border ${style.border} ${style.bg} shadow-xl p-4 min-w-[300px] max-w-xs`}
+            className={`
+              pointer-events-auto rounded-lg shadow-lg overflow-hidden text-white
+              w-[430px] max-w-[90vw] 
+              sm:w-[430px] 
+              transition-all
+            `}
           >
-            <div className="text-2xl">{style.icon}</div>
-            <div className="flex-1">
-              <p className={`text-sm font-semibold ${style.text}`}>{message}</p>
+            <div className={`p-5 flex gap-4 items-start ${style.bg}`}>
+              {/* Icon */}
+              <div
+                className={`
+                  flex items-center justify-center rounded-full 
+                  font-bold 
+                  ${style.iconBg}
+                  w-10 h-10 text-xl
+                  sm:w-12 sm:h-12 sm:text-2xl
+                `}
+              >
+                {style.icon}
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-lg sm:text-xl">{style.title}</p>
+                <p className="text-white/95 mt-1 text-sm sm:text-base break-words">
+                  {message}
+                </p>
+              </div>
+
+              {/* Close Button */}
+              <button
+                onClick={onClose}
+                className="text-white ml-4 hover:opacity-80 text-xl sm:text-2xl"
+              >
+                ✕
+              </button>
             </div>
-            <button
-              onClick={onClose}
-              className="ml-2 text-gray-500 hover:text-gray-700 transition-colors"
-              aria-label="Close"
-            >
-              ✕
-            </button>
+
+            {/* Progress Bar */}
+            <div className="h-2 bg-black/10">
+              <motion.div
+                initial={{ width: "100%" }}
+                animate={{ width: `${progress}%` }}
+                transition={{ ease: "linear", duration: 0.05 }}
+                className={`h-full ${style.iconBg}`}
+              />
+            </div>
           </motion.div>
         </motion.div>
       )}
